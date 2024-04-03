@@ -22,7 +22,7 @@ const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) 
     return () => {
       clearInterval(preloadTimer);
     };
-  }, [root, artist, song]);
+  }, [root, artist, song, volume]);
 
   const playNext = () => {
     numberOfFragments.current++;
@@ -33,7 +33,7 @@ const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) 
       import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
         sound.current = new Howl({
           src: [module.default],
-          volume: volume,
+          volume: sound.current.volume(),
           onend: playNext,
         });
         sound.current.play();
@@ -48,7 +48,6 @@ const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) 
       import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
         sound.current = new Howl({
           src: [module.default],
-          volume: volume,
           onend: playNext,
         });
         sound.current.play();
@@ -82,13 +81,12 @@ const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) 
     }
   }, [artist, song]);
 
-  //useEffect for change volume
+  //Update volume for all fragments
   useEffect(() => {
-    if (isPlaying) sound.current.volume(volume);
     if (sound.current) {
       sound.current.volume(volume);
     }
-  }, [volume, isPlaying]);
+  }, [volume]);
 
   return (
     <div>

@@ -148,9 +148,9 @@ const App = () => {
           type="range"
           min="0"
           max="1"
-          step="0.1"
+          step="0.01"
           value={volume}
-          onChange={(e) => setVolume(parseFloat(e.target.value).toFixed(2))}
+          onChange={(e) => setVolume(parseFloat(e.target.value))}
         />
       </div>
       {/* Title song selected */}
