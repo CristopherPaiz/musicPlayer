@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SongPlayer from "./components/SongPlayer";
 
 const App = () => {
@@ -87,6 +87,32 @@ const App = () => {
   ];
 
   const [selectedSong, setSelectedSong] = useState(Songs[0]);
+  const [random, setRandom] = useState(false);
+  const [endSong, setEndSong] = useState(false);
+  const [volume, setVolume] = useState(1);
+
+  // CONTINUE SONGS
+  useEffect(() => {
+    const playNext = () => {
+      if (endSong) {
+        if (random) {
+          // numero diferente al seleccionado actual
+          let index = Math.floor(Math.random() * Songs.length);
+          while (Songs[index].id === selectedSong.id) {
+            index = Math.floor(Math.random() * Songs.length);
+          }
+          setSelectedSong(Songs[index]);
+          setEndSong(false);
+        } else {
+          const index = Songs.findIndex((song) => song.id === selectedSong.id);
+          setSelectedSong(Songs[index + 1] || Songs[0]);
+          setEndSong(false);
+        }
+      }
+    };
+
+    playNext();
+  }, [endSong, random]);
 
   return (
     <div>
@@ -102,18 +128,45 @@ const App = () => {
               checked={selectedSong.id === song.id}
               onChange={() => setSelectedSong(song)}
             />
-            <label htmlFor={song.id}>{song.title}</label>
+            <label htmlFor={song.id}>
+              {song.artist} - {song.title}
+            </label>
           </div>
         ))}
       </div>
+      <br />
+      <br />
+      {/* Checkbox for randomizer */}
+      <div>
+        <input type="checkbox" id="random" name="random" checked={random} onChange={() => setRandom(!random)} />
+        <label htmlFor="random">Random</label>
+      </div>
 
+      {/* slider range for volume */}
+      <div>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.1"
+          value={volume}
+          onChange={(e) => setVolume(parseFloat(e.target.value).toFixed(2))}
+        />
+      </div>
       {/* Title song selected */}
       <h1>
         {selectedSong.title} - {selectedSong.artist}
       </h1>
 
       {/* <SongPlayer root="../usic" artist="El Trono de Mexico" song="La Ciudad Del Olvido" /> */}
-      <SongPlayer root="../Music" artist={selectedSong.artist} song={selectedSong.title} />
+      <SongPlayer
+        root="../Music"
+        artist={selectedSong.artist}
+        song={selectedSong.title}
+        setEndSong={setEndSong}
+        totalFragments={selectedSong.fragments}
+        volume={volume}
+      />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Howl } from "howler";
 import PropTypes from "prop-types";
 
-const SongPlayer = ({ root, artist, song }) => {
+const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) => {
   const sound = useRef(null);
   const numberOfFragments = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,13 +26,19 @@ const SongPlayer = ({ root, artist, song }) => {
 
   const playNext = () => {
     numberOfFragments.current++;
-    import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
-      sound.current = new Howl({
-        src: [module.default],
-        onend: playNext,
+    if (numberOfFragments.current > totalFragments) {
+      setEndSong(true);
+    } else {
+      setEndSong(false);
+      import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
+        sound.current = new Howl({
+          src: [module.default],
+          volume: volume,
+          onend: playNext,
+        });
+        sound.current.play();
       });
-      sound.current.play();
-    });
+    }
   };
 
   const startPlaying = () => {
@@ -42,6 +48,7 @@ const SongPlayer = ({ root, artist, song }) => {
       import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
         sound.current = new Howl({
           src: [module.default],
+          volume: volume,
           onend: playNext,
         });
         sound.current.play();
@@ -75,6 +82,14 @@ const SongPlayer = ({ root, artist, song }) => {
     }
   }, [artist, song]);
 
+  //useEffect for change volume
+  useEffect(() => {
+    if (isPlaying) sound.current.volume(volume);
+    if (sound.current) {
+      sound.current.volume(volume);
+    }
+  }, [volume, isPlaying]);
+
   return (
     <div>
       <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>{isPlaying ? "||" : "►"}</button>
@@ -89,4 +104,7 @@ SongPlayer.propTypes = {
   root: PropTypes.string.isRequired,
   artist: PropTypes.string.isRequired,
   song: PropTypes.string.isRequired,
+  setEndSong: PropTypes.func.isRequired,
+  totalFragments: PropTypes.number,
+  volume: PropTypes.number,
 };
