@@ -60,7 +60,7 @@ const Home = () => {
       {playlistSelected && songs.length > 0 ? (
         <App playlist={songs} folder={playlist.root} />
       ) : (
-        <h1>Seleccciona una playlist para empezar</h1>
+        <h1>¡Seleccciona una playlist para empezar!</h1>
       )}
     </>
   );
