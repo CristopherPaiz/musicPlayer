@@ -8,7 +8,7 @@ const App = ({ playlist, folder }) => {
   const [selectedSong, setSelectedSong] = useState(songs[0]);
   const [random, setRandom] = useState(false);
   const [endSong, setEndSong] = useState(false);
-  const [volume, setVolume] = useState(0.1);
+  const [volume, setVolume] = useState(1);
   const [previousSong, setPreviousSong] = useState(null);
   const [image, setImage] = useState(null);
   const [folderRoot] = useState("Music");
@@ -25,7 +25,7 @@ const App = ({ playlist, folder }) => {
     };
 
     playNext();
-  }, [endSong]);
+  }, [endSong, selectedSong.id, songs]);
 
   //previous song
   useEffect(() => {
@@ -143,7 +143,6 @@ const App = ({ playlist, folder }) => {
         <div>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</div>
       </div>
       <br />
-      <br />
 
       {/* SONGPLAYER */}
       <SongPlayer
@@ -162,6 +161,6 @@ const App = ({ playlist, folder }) => {
 export default App;
 
 App.propTypes = {
-  playlist: PropTypes.object,
+  playlist: PropTypes.array,
   folder: PropTypes.string,
 };
