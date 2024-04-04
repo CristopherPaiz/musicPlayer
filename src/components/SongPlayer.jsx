@@ -109,10 +109,9 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
 
   return (
     <div>
-      <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>{isPlaying ? "||" : "►"}</button>
-      <button onClick={() => resetPlaying()}>■</button>
-      {/* Next $ Previous button */}
-      <button onClick={() => playPrevious()}>Previous</button>
+      <button onClick={() => playPrevious()}>Previous</button>{" "}
+      <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>{isPlaying ? "||" : "►"}</button>{" "}
+      <button onClick={() => resetPlaying()}>■</button> {" "}
       <button onClick={() => setEndSong(true)}>Next</button>
     </div>
   );
