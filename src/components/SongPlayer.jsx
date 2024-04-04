@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Howl } from "howler";
 import PropTypes from "prop-types";
 
-const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) => {
+const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFragments, volume }) => {
   const sound = useRef(null);
   const numberOfFragments = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -35,6 +35,25 @@ const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) 
           src: [module.default],
           volume: sound.current.volume(),
           onend: playNext,
+        });
+        sound.current.play();
+      });
+    }
+  };
+
+  const playPrevious = () => {
+    numberOfFragments.current--;
+    if (numberOfFragments.current < 1) {
+      setPreviousSong(true);
+    } else {
+      numberOfFragments.current = 1;
+      sound.current.stop();
+      setPreviousSong(false);
+      import(`${root}/${artist}/${song}/1.mp3`).then((module) => {
+        sound.current = new Howl({
+          src: [module.default],
+          volume: sound.current.volume(),
+          onend: playPrevious,
         });
         sound.current.play();
       });
@@ -92,6 +111,9 @@ const SongPlayer = ({ root, artist, song, setEndSong, totalFragments, volume }) 
     <div>
       <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>{isPlaying ? "||" : "►"}</button>
       <button onClick={() => resetPlaying()}>■</button>
+      {/* Next $ Previous button */}
+      <button onClick={() => playPrevious()}>Previous</button>
+      <button onClick={() => setEndSong(true)}>Next</button>
     </div>
   );
 };
@@ -102,6 +124,7 @@ SongPlayer.propTypes = {
   root: PropTypes.string.isRequired,
   artist: PropTypes.string.isRequired,
   song: PropTypes.string.isRequired,
+  setPreviousSong: PropTypes.func,
   setEndSong: PropTypes.func.isRequired,
   totalFragments: PropTypes.number,
   volume: PropTypes.number,

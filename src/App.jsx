@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import SongPlayer from "./components/SongPlayer";
 
 const App = () => {
-  const Songs = [
+  const initialSongs = [
     {
       id: 1,
       title: "Mujer",
@@ -85,40 +85,71 @@ const App = () => {
       fragments: 19,
     },
   ];
-
-  const [selectedSong, setSelectedSong] = useState(Songs[0]);
+  const [songs, setSongs] = useState(initialSongs);
+  const [selectedSong, setSelectedSong] = useState(songs[0]);
   const [random, setRandom] = useState(false);
   const [endSong, setEndSong] = useState(false);
   const [volume, setVolume] = useState(1);
+  const [previousSong, setPreviousSong] = useState(null);
 
   // CONTINUE SONGS
   useEffect(() => {
     const playNext = () => {
       if (endSong) {
-        if (random) {
-          // numero diferente al seleccionado actual
-          let index = Math.floor(Math.random() * Songs.length);
-          while (Songs[index].id === selectedSong.id) {
-            index = Math.floor(Math.random() * Songs.length);
-          }
-          setSelectedSong(Songs[index]);
-          setEndSong(false);
-        } else {
-          const index = Songs.findIndex((song) => song.id === selectedSong.id);
-          setSelectedSong(Songs[index + 1] || Songs[0]);
-          setEndSong(false);
-        }
+        const index = songs.findIndex((song) => song.id === selectedSong.id);
+        setSelectedSong(songs[index + 1] || songs[0]);
+        setPreviousSong(false);
+        setEndSong(false);
       }
     };
 
     playNext();
-  }, [endSong, random]);
+  }, [endSong]);
+
+  //previous song
+  useEffect(() => {
+    const playPrevious = () => {
+      if (previousSong) {
+        const index = songs.findIndex((song) => song.id === selectedSong.id);
+        setSelectedSong(songs[index - 1] || songs[songs.length - 1]);
+        setPreviousSong(false);
+        setEndSong(false);
+      }
+    };
+
+    playPrevious();
+  }, [previousSong]);
+
+  useEffect(() => {
+    function shuffleArray(array) {
+      const shuffledArray = [...array];
+      for (let i = shuffledArray.length - 1; i > 0; i--) {
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+        [shuffledArray[i], shuffledArray[randomIndex]] = [shuffledArray[randomIndex], shuffledArray[i]];
+      }
+      //set current song to the top and shuffle the rest
+      const index = shuffledArray.findIndex((song) => song.id === selectedSong.id);
+      const currentSong = shuffledArray[index];
+      shuffledArray.splice(index, 1);
+      shuffledArray.unshift(currentSong);
+      setSongs(shuffledArray);
+    }
+
+    if (random) {
+      shuffleArray(songs);
+    }
+  }, [random]);
+
+  //force refresh checkboxes when next song is pressed
+  useEffect(() => {
+    setSelectedSong(selectedSong);
+  }, [selectedSong]);
 
   return (
     <div>
       {/* Checkbox to select song */}
       <div>
-        {Songs.map((song) => (
+        {songs.map((song) => (
           <div key={song.id}>
             <input
               type="radio"
@@ -136,6 +167,7 @@ const App = () => {
       </div>
       <br />
       <br />
+
       {/* Checkbox for randomizer */}
       <div>
         <input type="checkbox" id="random" name="random" checked={random} onChange={() => setRandom(!random)} />
@@ -153,16 +185,18 @@ const App = () => {
           onChange={(e) => setVolume(parseFloat(e.target.value))}
         />
       </div>
+
       {/* Title song selected */}
-      <h1>
+      <h2>
         {selectedSong.title} - {selectedSong.artist}
-      </h1>
+      </h2>
 
       {/* <SongPlayer root="../usic" artist="El Trono de Mexico" song="La Ciudad Del Olvido" /> */}
       <SongPlayer
         root="../Music"
         artist={selectedSong.artist}
         song={selectedSong.title}
+        setPreviousSong={setPreviousSong}
         setEndSong={setEndSong}
         totalFragments={selectedSong.fragments}
         volume={volume}
