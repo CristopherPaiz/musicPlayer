@@ -1,0 +1,146 @@
+[
+    {
+        "id": 1,
+        "title": "Amor de Madre",
+        "artist": "Aventura",
+        "length": "350.798367",
+        "album": "We Broke The Rules",
+        "date": "2002-06-01",
+        "fragments": 36
+    },
+    {
+        "id": 2,
+        "title": "Angelito",
+        "artist": "Aventura",
+        "length": "293.198367",
+        "album": "God's Project",
+        "date": "2005-04-12",
+        "fragments": 30
+    },
+    {
+        "id": 3,
+        "title": "Dile al Amor",
+        "artist": "Aventura",
+        "length": "229.407347",
+        "album": "The Last",
+        "date": "2009-06-09",
+        "fragments": 23
+    },
+    {
+        "id": 4,
+        "title": "El Malo",
+        "artist": "Aventura",
+        "length": "238.759184",
+        "album": "The Last",
+        "date": "2009-06-09",
+        "fragments": 24
+    },
+    {
+        "id": 5,
+        "title": "El Perdedor",
+        "artist": "Aventura",
+        "length": "215.248980",
+        "album": "Todav\u00eda Me Amas: Lo Mejor de Aventura",
+        "date": "2016-02-05",
+        "fragments": 22
+    },
+    {
+        "id": 6,
+        "title": "Ella Y Yo (Featuring Don Omar)",
+        "artist": "Aventura",
+        "length": "267.833469",
+        "album": "God's Project",
+        "date": "2005-04-12",
+        "fragments": 27
+    },
+    {
+        "id": 7,
+        "title": "Ense\u00f1ame a Olvidar",
+        "artist": "Aventura",
+        "length": "348.865306",
+        "album": "We Broke The Rules",
+        "date": "2002-06-01",
+        "fragments": 35
+    },
+    {
+        "id": 8,
+        "title": "La Boda",
+        "artist": "Aventura",
+        "length": "289.880816",
+        "album": "Todav\u00eda Me Amas: Lo Mejor de Aventura (Deluxe Edition)",
+        "date": "2002-01-01",
+        "fragments": 29
+    },
+    {
+        "id": 9,
+        "title": "La Novelita",
+        "artist": "Aventura",
+        "length": "244.924082",
+        "album": "Generation Next",
+        "date": "1999-01-01",
+        "fragments": 25
+    },
+    {
+        "id": 10,
+        "title": "Los Infieles",
+        "artist": "Aventura",
+        "length": "257.227755",
+        "album": "K.O.B. Live",
+        "date": "2006-12-19",
+        "fragments": 26
+    },
+    {
+        "id": 11,
+        "title": "Obsesion",
+        "artist": "Aventura",
+        "length": "254.746122",
+        "album": "We Broke The Rules",
+        "date": "2002-06-01",
+        "fragments": 26
+    },
+    {
+        "id": 12,
+        "title": "Por un segundo",
+        "artist": "Aventura",
+        "length": "256.365714",
+        "album": "Por un segundo",
+        "date": "2008-12-02",
+        "fragments": 26
+    },
+    {
+        "id": 13,
+        "title": "Su Veneno",
+        "artist": "Aventura",
+        "length": "240.744490",
+        "album": "The Last",
+        "date": "2009-06-09",
+        "fragments": 25
+    },
+    {
+        "id": 14,
+        "title": "Un Beso",
+        "artist": "Aventura",
+        "length": "263.392653",
+        "album": "God's Project",
+        "date": "2005-04-12",
+        "fragments": 27
+    },
+    {
+        "id": 15,
+        "title": "Amor Narc\u00f3tico",
+        "artist": "Chichi Peralta",
+        "length": "316.995918",
+        "album": "Pa' Otro La 'O",
+        "date": "1997-07-01",
+        "fragments": 32
+    },
+    {
+        "id": 16,
+        "title": "Procura",
+        "artist": "Chichi Peralta",
+        "length": "271.072653",
+        "album": "Pa' Otro La 'o",
+        "date": "1997-07-01",
+        "fragments": 28
+    }
+]

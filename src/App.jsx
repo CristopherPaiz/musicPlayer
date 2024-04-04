@@ -1,95 +1,14 @@
 import { useEffect, useState } from "react";
 import SongPlayer from "./components/SongPlayer";
+import PropTypes from "prop-types";
+import "./Music/Bachata/bachata.json";
 
-const App = () => {
-  const initialSongs = [
-    {
-      id: 1,
-      title: "Mujer",
-      artist: "Alux Nahual",
-      length: "278.047347",
-      album: "Leyenda (Oficial)",
-      date: "1990-05-05",
-      fragments: 28,
-    },
-    {
-      id: 2,
-      title: "Flaca",
-      artist: "Andr\u00e9s Calamaro",
-      length: "276.166531",
-      album: "Andres",
-      date: "2009-04-06",
-      fragments: 28,
-    },
-    {
-      id: 3,
-      title: "Dile al Amor",
-      artist: "Aventura",
-      length: "229.407347",
-      album: "The Last",
-      date: "2009-06-09",
-      fragments: 23,
-    },
-    {
-      id: 4,
-      title: "El Perdedor",
-      artist: "Aventura",
-      length: "215.248980",
-      album: "Todav\u00eda Me Amas: Lo Mejor de Aventura",
-      date: "2016-02-05",
-      fragments: 22,
-    },
-    {
-      id: 5,
-      title: "Los Infieles",
-      artist: "Aventura",
-      length: "257.227755",
-      album: "K.O.B. Live",
-      date: "2006-12-19",
-      fragments: 26,
-    },
-    {
-      id: 6,
-      title: "D\u00c1KITI",
-      artist: "Bad Bunny",
-      length: "205.139592",
-      album: "D\u00c1KITI",
-      date: "2020-10-30",
-      fragments: 21,
-    },
-    {
-      id: 7,
-      title: "Blah, Blah, Blah",
-      artist: "Cartel De Santa",
-      length: "179.617959",
-      album: "Greatest - Hits",
-      date: "2007-05-22",
-      fragments: 18,
-    },
-    {
-      id: 8,
-      title: "De Los Besos Que Te Di",
-      artist: "Christian Nodal",
-      length: "167.523265",
-      album: "De Los Besos Que Te Di",
-      date: "2019-04-15",
-      fragments: 17,
-    },
-    {
-      id: 9,
-      title: "La Ciudad Del Olvido",
-      artist: "El Trono de Mexico",
-      length: "189.727347",
-      album: "Lo Mejor De",
-      date: "2012-01-01",
-      fragments: 19,
-    },
-  ];
-  const [songs, setSongs] = useState(initialSongs);
+const App = ({ playlist, folder }) => {
+  const [songs, setSongs] = useState(playlist);
   const [selectedSong, setSelectedSong] = useState(songs[0]);
   const [random, setRandom] = useState(false);
   const [endSong, setEndSong] = useState(false);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(0.1);
   const [previousSong, setPreviousSong] = useState(null);
   const [image, setImage] = useState(null);
   const [folderRoot] = useState("Music");
@@ -149,10 +68,16 @@ const App = () => {
 
   //charge image dinamically
   useEffect(() => {
-    import(`./${folderRoot}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
+    import(`./${folderRoot}/${folder}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
       setImage(module.default);
     });
   }, [selectedSong]);
+
+  //listen changes playlist
+  useEffect(() => {
+    setSongs(playlist);
+    setSelectedSong(playlist[0]);
+  }, [playlist]);
 
   return (
     <div>
@@ -176,7 +101,7 @@ const App = () => {
           ))}
         </div>
         {/* render Image cover */}
-        {image && <img src={image} alt="cover" />}
+        {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
       </div>
 
       {/* Checkbox for randomizer */}
@@ -222,7 +147,7 @@ const App = () => {
 
       {/* SONGPLAYER */}
       <SongPlayer
-        root={`../${folderRoot}`}
+        root={`../${folderRoot}/${folder}`}
         artist={selectedSong.artist}
         song={selectedSong.title}
         setPreviousSong={setPreviousSong}
@@ -235,3 +160,8 @@ const App = () => {
 };
 
 export default App;
+
+App.propTypes = {
+  playlist: PropTypes.object,
+  folder: PropTypes.string,
+};

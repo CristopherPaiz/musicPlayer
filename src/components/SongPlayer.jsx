@@ -67,6 +67,7 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
       import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
         sound.current = new Howl({
           src: [module.default],
+          volume: volume,
           onend: playNext,
         });
         sound.current.play();
@@ -111,8 +112,7 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
     <div>
       <button onClick={() => playPrevious()}>Previous</button>{" "}
       <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>{isPlaying ? "||" : "►"}</button>{" "}
-      <button onClick={() => resetPlaying()}>■</button> {" "}
-      <button onClick={() => setEndSong(true)}>Next</button>
+      <button onClick={() => resetPlaying()}>■</button> <button onClick={() => setEndSong(true)}>Next</button>
     </div>
   );
 };

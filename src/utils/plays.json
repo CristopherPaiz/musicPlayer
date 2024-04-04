@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Bachata",
+    "description": "Una playlist de bachata para bailar toda la noche",
+    "tracks": 16,
+    "artist": "Aventura, Chichi Peralta",
+    "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJaQiLDBtoWf1krry9Yvij8LGKxIR4GBo5-rRj4xXM3g&s",
+    "play": "bachata",
+    "root": "Bachata"
+  },
+  {
+    "id": 2,
+    "name": "Ricardo Arjona",
+    "description": "Una playlist de Ricardo Arjona para esos corazones rotos y despechados",
+    "tracks": 69,
+    "artist": "Ricardo Arjona",
+    "cover": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Concierto_Ricardo_Arjona_Miami_2009_crop.jpg",
+    "play": "ricardoArjona",
+    "root": "Ricardo Arjona"
+  },
+  {
+    "id": 3,
+    "name": "General",
+    "description": "Una playlist de música variada para todos los gustos",
+    "tracks": 9,
+    "artist": "Varios",
+    "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTh08C1KBayaulyw-wzRbyzlBnY4991tnInjDPI9yvABg&s",
+    "play": "general",
+    "root": "General"
+  }
+]
