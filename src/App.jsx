@@ -91,6 +91,8 @@ const App = () => {
   const [endSong, setEndSong] = useState(false);
   const [volume, setVolume] = useState(1);
   const [previousSong, setPreviousSong] = useState(null);
+  const [image, setImage] = useState(null);
+  const [folderRoot] = useState("Music");
 
   // CONTINUE SONGS
   useEffect(() => {
@@ -145,28 +147,37 @@ const App = () => {
     setSelectedSong(selectedSong);
   }, [selectedSong]);
 
+  //charge image dinamically
+  useEffect(() => {
+    import(`./${folderRoot}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
+      setImage(module.default);
+    });
+  }, [selectedSong]);
+
   return (
     <div>
       {/* Checkbox to select song */}
-      <div>
-        {songs.map((song) => (
-          <div key={song.id}>
-            <input
-              type="radio"
-              id={song.id}
-              name="song"
-              value={song.id}
-              checked={selectedSong.id === song.id}
-              onChange={() => setSelectedSong(song)}
-            />
-            <label htmlFor={song.id}>
-              {song.artist} - {song.title}
-            </label>
-          </div>
-        ))}
+      <div style={{ display: "flex", gap: "2rem" }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {songs.map((song) => (
+            <div key={song.id}>
+              <input
+                type="radio"
+                id={song.id}
+                name="song"
+                value={song.id}
+                checked={selectedSong.id === song.id}
+                onChange={() => setSelectedSong(song)}
+              />
+              <label htmlFor={song.id}>
+                {song.artist} - {song.title}
+              </label>
+            </div>
+          ))}
+        </div>
+        {/* render Image cover */}
+        {image && <img src={image} alt="cover" />}
       </div>
-      <br />
-      <br />
 
       {/* Checkbox for randomizer */}
       <div>
@@ -186,14 +197,32 @@ const App = () => {
         />
       </div>
 
-      {/* Title song selected */}
+      {/* render song title and artist */}
       <h2>
         {selectedSong.title} - {selectedSong.artist}
       </h2>
 
-      {/* <SongPlayer root="../usic" artist="El Trono de Mexico" song="La Ciudad Del Olvido" /> */}
+      {/* duation bar based on selectedSong.length */}
+      <div style={{ display: "flex", gap: "2rem" }}>
+        <div>{"00:00"}</div>
+        <div style={{ width: "100%", backgroundColor: "lightgray" }}>
+          <div
+            style={{
+              width: `${(selectedSong.fragments / selectedSong.length) * 100}%`,
+              backgroundColor: "blue",
+              height: "20px",
+            }}
+          ></div>
+        </div>
+        {/* seconds to mm:ss */}
+        <div>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</div>
+      </div>
+      <br />
+      <br />
+
+      {/* SONGPLAYER */}
       <SongPlayer
-        root="../Music"
+        root={`../${folderRoot}`}
         artist={selectedSong.artist}
         song={selectedSong.title}
         setPreviousSong={setPreviousSong}
