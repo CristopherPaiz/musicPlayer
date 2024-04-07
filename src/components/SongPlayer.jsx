@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Howl } from "howler";
 import PropTypes from "prop-types";
 
-const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFragments, volume }) => {
+const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFragments, volume, setSeek, userSeek }) => {
   const sound = useRef(null);
   const numberOfFragments = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [seekPlayer, setSeekPlayer] = useState(0);
 
   useEffect(() => {
     const preloadNext = () => {
@@ -17,7 +18,7 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
       });
     };
 
-    const preloadTimer = setInterval(preloadNext, 8000);
+    const preloadTimer = setInterval(preloadNext, 5000);
 
     return () => {
       clearInterval(preloadTimer);
@@ -108,6 +109,47 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
     }
   }, [volume]);
 
+  //print each second the current time
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (sound.current) {
+        setSeek(numberOfFragments.current * 10 + sound.current.seek() - 10);
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [sound.current]);
+
+  //if userSeek has changed, change seek of the player change the fragment number and the seek of the player
+  useEffect(() => {
+    if (sound.current) {
+      var newValueFragment = parseInt(userSeek / 10) + 1;
+      var remaingNewValueFragment = userSeek % 10;
+      setSeekPlayer(remaingNewValueFragment);
+      //stop song, play new fragment and set remaing time to current sound
+      sound.current.stop();
+      numberOfFragments.current = newValueFragment;
+      import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
+        sound.current = new Howl({
+          src: [module.default],
+          volume: volume,
+          onend: playNext,
+        });
+        sound.current.play();
+        sound.current.seek(remaingNewValueFragment);
+      });
+    }
+  }, [userSeek]);
+
+  //if seekPlayer change seek current fragment
+  useEffect(() => {
+    if (sound.current) {
+      sound.current.seek(seekPlayer);
+    }
+  }, [seekPlayer]);
+
   return (
     <div>
       <button onClick={() => playPrevious()}>Previous</button>{" "}
@@ -127,4 +169,6 @@ SongPlayer.propTypes = {
   setEndSong: PropTypes.func.isRequired,
   totalFragments: PropTypes.number,
   volume: PropTypes.number,
+  setSeek: PropTypes.func,
+  userSeek: PropTypes.number,
 };

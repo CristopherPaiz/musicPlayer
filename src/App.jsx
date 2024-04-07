@@ -8,10 +8,12 @@ const App = ({ playlist, folder }) => {
   const [selectedSong, setSelectedSong] = useState(songs[0]);
   const [random, setRandom] = useState(false);
   const [endSong, setEndSong] = useState(false);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(0.5);
   const [previousSong, setPreviousSong] = useState(null);
   const [image, setImage] = useState(null);
   const [folderRoot] = useState("Music");
+  const [seek, setSeek] = useState(0);
+  const [userSeek, setUserSeek] = useState(0);
 
   // CONTINUE SONGS
   useEffect(() => {
@@ -71,13 +73,38 @@ const App = ({ playlist, folder }) => {
     import(`./${folderRoot}/${folder}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
       setImage(module.default);
     });
+    setSeek(0);
   }, [selectedSong]);
 
   //listen changes playlist
   useEffect(() => {
     setSongs(playlist);
     setSelectedSong(playlist[0]);
+    setSeek(0);
   }, [playlist]);
+
+  //handle seek and change value and update setInterval to change seek +1 every second from new value
+  const handleSeek = (e) => {
+    setSeek(parseInt(e.target.value));
+    setUserSeek(parseInt(e.target.value));
+  };
+
+  // // change seek +1 every second previous value, when song is playing or seek change value
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (seek < parseInt(selectedSong.length)) {
+  //       setSeek(seek + 1);
+  //     }
+  //   }, 1000);
+  //   return () => clearInterval(interval);
+  // }, [seek, selectedSong.length, endSong]);
+
+  //if seek is equal to song length, next song
+  useEffect(() => {
+    if (seek === parseInt(selectedSong.length)) {
+      setEndSong(true);
+    }
+  }, [seek, selectedSong.length]);
 
   return (
     <div>
@@ -126,22 +153,22 @@ const App = ({ playlist, folder }) => {
       <h2>
         {selectedSong.title} - {selectedSong.artist}
       </h2>
-
-      {/* duation bar based on selectedSong.length */}
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <div>{"00:00"}</div>
-        <div style={{ width: "100%", backgroundColor: "lightgray" }}>
-          <div
-            style={{
-              width: `${(selectedSong.fragments / selectedSong.length) * 100}%`,
-              backgroundColor: "blue",
-              height: "20px",
-            }}
-          ></div>
-        </div>
-        {/* seconds to mm:ss */}
-        <div>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</div>
+      <div style={{ width: "100%", display: "flex" }}>
+        {/* <span>0:00</span> */}
+        <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
+        {/* duation bar based on selectedSong.length like input range*/}
+        <input
+          style={{ flex: "1" }}
+          value={seek}
+          type="range"
+          min="0"
+          max={selectedSong.length}
+          step="1"
+          onChange={handleSeek}
+        />
+        <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
       </div>
+
       <br />
 
       {/* SONGPLAYER */}
@@ -153,6 +180,8 @@ const App = ({ playlist, folder }) => {
         setEndSong={setEndSong}
         totalFragments={selectedSong.fragments}
         volume={volume}
+        setSeek={setSeek}
+        userSeek={userSeek}
       />
     </div>
   );
