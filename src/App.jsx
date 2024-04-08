@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import SongPlayer from "./components/SongPlayer";
 import PropTypes from "prop-types";
-import "./Music/Bachata/bachata.json";
 
-const App = ({ playlist, folder }) => {
+const App = ({ URL_BASE, playlist, folder }) => {
   const [songs, setSongs] = useState(playlist);
   const [selectedSong, setSelectedSong] = useState(songs[0]);
   const [random, setRandom] = useState(false);
@@ -70,11 +69,21 @@ const App = ({ playlist, folder }) => {
 
   //charge image dinamically
   useEffect(() => {
-    import(`./${folderRoot}/${folder}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
-      setImage(module.default);
-    });
+    // import(`./${folderRoot}/${folder}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
+    //   setImage(module.default);
+    // });
+    const fetchImages = async () => {
+      if (!playlist) return;
+      const response = await fetch(
+        URL_BASE + folder + "/" + selectedSong.artist + "/" + selectedSong.title + "/" + "cover.webp"
+      );
+      const data = await response.blob();
+      const url = URL.createObjectURL(data);
+      setImage(url);
+    };
+    fetchImages();
     setSeek(0);
-  }, [selectedSong]);
+  }, [selectedSong, URL_BASE, folder, folderRoot, playlist]);
 
   //listen changes playlist
   useEffect(() => {
@@ -88,16 +97,6 @@ const App = ({ playlist, folder }) => {
     setSeek(parseInt(e.target.value));
     setUserSeek(parseInt(e.target.value));
   };
-
-  // // change seek +1 every second previous value, when song is playing or seek change value
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     if (seek < parseInt(selectedSong.length)) {
-  //       setSeek(seek + 1);
-  //     }
-  //   }, 1000);
-  //   return () => clearInterval(interval);
-  // }, [seek, selectedSong.length, endSong]);
 
   //if seek is equal to song length, next song
   useEffect(() => {
@@ -173,7 +172,7 @@ const App = ({ playlist, folder }) => {
 
       {/* SONGPLAYER */}
       <SongPlayer
-        root={`../${folderRoot}/${folder}`}
+        root={`${URL_BASE}${folder}`}
         artist={selectedSong.artist}
         song={selectedSong.title}
         setPreviousSong={setPreviousSong}
@@ -190,6 +189,7 @@ const App = ({ playlist, folder }) => {
 export default App;
 
 App.propTypes = {
+  URL_BASE: PropTypes.string,
   playlist: PropTypes.array,
   folder: PropTypes.string,
 };

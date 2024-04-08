@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Playlists from "./utils/plays.json";
+// import Playlists from "./utils/plays.json";
 import App from "./App";
 
 const Home = () => {
@@ -8,9 +8,16 @@ const Home = () => {
   const [playlist, setPlaylist] = useState([]);
   const [songs, setSongs] = useState([]);
 
-  //Charge playlists from JSON
+  const URL_BASE = "https://music-fragments.s3.fr-par.scw.cloud/";
+
+  //FECTH playlistsm from url an setPlaylists
   useEffect(() => {
-    setPlaylists(Playlists);
+    const fetchPlaylists = async () => {
+      const response = await fetch(URL_BASE + "plays.json");
+      const data = await response.json();
+      setPlaylists(data);
+    };
+    fetchPlaylists();
   }, []);
 
   //Select playlist
@@ -21,11 +28,19 @@ const Home = () => {
 
   //update playlist selected import EcmaScript 6
   useEffect(() => {
-    if (playlistSelected) {
-      import(`./Music/${playlist.root}/${playlist.play}.json`).then((data) => {
-        setSongs(data.default);
-      });
-    }
+    // if (playlistSelected) {
+    //   import(`./Music/${playlist.root}/${playlist.play}.json`).then((data) => {
+    //     setSongs(data.default);
+    //   });
+    // }
+
+    const fetchPlaylists = async () => {
+      if (!playlistSelected) return;
+      const response = await fetch(URL_BASE + playlist.root + "/" + playlist.play + ".json");
+      const data = await response.json();
+      setSongs(data);
+    };
+    fetchPlaylists();
   }, [playlistSelected, playlist]);
 
   return (
@@ -58,7 +73,7 @@ const Home = () => {
         ))}
       </div>
       {playlistSelected && songs.length > 0 ? (
-        <App playlist={songs} folder={playlist.root} />
+        <App URL_BASE={URL_BASE} playlist={songs} folder={playlist.root} />
       ) : (
         <h1>¡Seleccciona una playlist para empezar!</h1>
       )}

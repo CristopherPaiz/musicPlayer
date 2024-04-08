@@ -11,10 +11,13 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
   useEffect(() => {
     const preloadNext = () => {
       const nextFragment = numberOfFragments.current + 1;
-      import(`${root}/${artist}/${song}/${nextFragment}.mp3`).then((module) => {
-        new Howl({
-          src: [module.default],
-        });
+      // import(`${root}/${artist}/${song}/${nextFragment}.mp3`).then((module) => {
+      //   new Howl({
+      //     src: [module.default],
+      //   });
+      // });
+      new Howl({
+        src: `${root}/${artist}/${song}/${nextFragment}.mp3`,
       });
     };
 
@@ -25,24 +28,30 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
     };
   }, [root, artist, song, volume]);
 
-  const playNext = () => {
+  const playNext = async () => {
     numberOfFragments.current++;
     if (numberOfFragments.current > totalFragments) {
       setEndSong(true);
     } else {
       setEndSong(false);
-      import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
-        sound.current = new Howl({
-          src: [module.default],
-          volume: sound.current.volume(),
-          onend: playNext,
-        });
-        sound.current.play();
+      // import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
+      //   sound.current = new Howl({
+      //     src: [module.default],
+      //     volume: sound.current.volume(),
+      //     onend: playNext,
+      //   });
+      //   sound.current.play();
+      // });
+      sound.current = new Howl({
+        src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
+        volume: sound.current.volume(),
+        onend: playNext,
       });
+      sound.current.play();
     }
   };
 
-  const playPrevious = () => {
+  const playPrevious = async () => {
     numberOfFragments.current--;
     if (numberOfFragments.current < 1) {
       setPreviousSong(true);
@@ -50,29 +59,41 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
       numberOfFragments.current = 1;
       sound.current.stop();
       setPreviousSong(false);
-      import(`${root}/${artist}/${song}/1.mp3`).then((module) => {
-        sound.current = new Howl({
-          src: [module.default],
-          volume: sound.current.volume(),
-          onend: playPrevious,
-        });
-        sound.current.play();
+      // import(`${root}/${artist}/${song}/1.mp3`).then((module) => {
+      //   sound.current = new Howl({
+      //     src: [module.default],
+      //     volume: sound.current.volume(),
+      //     onend: playPrevious,
+      //   });
+      //   sound.current.play();
+      // });
+      sound.current = new Howl({
+        src: `${root}/${artist}/${song}/1.mp3`,
+        volume: sound.current.volume(),
+        onend: playPrevious,
       });
+      sound.current.play();
     }
   };
 
-  const startPlaying = () => {
+  const startPlaying = async () => {
     setIsPlaying(true);
     if (!sound.current) {
       numberOfFragments.current = 1;
-      import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
-        sound.current = new Howl({
-          src: [module.default],
-          volume: volume,
-          onend: playNext,
-        });
-        sound.current.play();
+      // import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
+      //   sound.current = new Howl({
+      //     src: [module.default],
+      //     volume: volume,
+      //     onend: playNext,
+      //   });
+      //   sound.current.play();
+      // });
+      sound.current = new Howl({
+        src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
+        volume: volume,
+        onend: playNext,
       });
+      sound.current.play();
     } else {
       sound.current.play();
     }
@@ -131,15 +152,25 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
       //stop song, play new fragment and set remaing time to current sound
       sound.current.stop();
       numberOfFragments.current = newValueFragment;
-      import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
+      // import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
+      //   sound.current = new Howl({
+      //     src: [module.default],
+      //     volume: volume,
+      //     onend: playNext,
+      //   });
+      //   sound.current.play();
+      //   sound.current.seek(remaingNewValueFragment);
+      // });
+      const fetchNewFragment = async () => {
         sound.current = new Howl({
-          src: [module.default],
+          src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
           volume: volume,
           onend: playNext,
         });
         sound.current.play();
         sound.current.seek(remaingNewValueFragment);
-      });
+      };
+      fetchNewFragment();
     }
   }, [userSeek]);
 
