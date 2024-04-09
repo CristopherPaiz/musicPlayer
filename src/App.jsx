@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import SongPlayer from "./components/SongPlayer";
 import PropTypes from "prop-types";
 
-const App = ({ URL_BASE, playlist, folder }) => {
+const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) => {
   const [songs, setSongs] = useState(playlist);
   const [selectedSong, setSelectedSong] = useState(songs[0]);
   const [random, setRandom] = useState(false);
@@ -65,7 +65,8 @@ const App = ({ URL_BASE, playlist, folder }) => {
   //force refresh checkboxes when next song is pressed
   useEffect(() => {
     setSelectedSong(selectedSong);
-  }, [selectedSong]);
+    setChangePlaylist(false);
+  }, [selectedSong, setChangePlaylist]);
 
   //create mediaSession and update when selectedSong changes
 
@@ -93,6 +94,7 @@ const App = ({ URL_BASE, playlist, folder }) => {
     setSongs(playlist);
     setSelectedSong(playlist[0]);
     setSeek(0);
+    setChangePlaylist(true);
   }, [playlist]);
 
   //handle seek and change value and update setInterval to change seek +1 every second from new value
@@ -184,6 +186,7 @@ const App = ({ URL_BASE, playlist, folder }) => {
         volume={volume}
         setSeek={setSeek}
         userSeek={userSeek}
+        changePlaylist={changePlaylist}
       />
     </div>
   );
@@ -195,4 +198,6 @@ App.propTypes = {
   URL_BASE: PropTypes.string,
   playlist: PropTypes.array,
   folder: PropTypes.string,
+  changePlaylist: PropTypes.bool,
+  setChangePlaylist: PropTypes.func,
 };

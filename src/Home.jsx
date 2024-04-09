@@ -7,6 +7,7 @@ const Home = () => {
   const [playlists, setPlaylists] = useState([]);
   const [playlist, setPlaylist] = useState([]);
   const [songs, setSongs] = useState([]);
+  const [changePlaylist, setChangePlaylist] = useState(false);
 
   const URL_BASE = "https://music-fragments.s3.fr-par.scw.cloud/";
 
@@ -39,6 +40,7 @@ const Home = () => {
       const response = await fetch(URL_BASE + playlist.root + "/" + playlist.play + ".json");
       const data = await response.json();
       setSongs(data);
+      setChangePlaylist(true);
     };
     fetchPlaylists();
   }, [playlistSelected, playlist]);
@@ -47,6 +49,7 @@ const Home = () => {
   useEffect(() => {
     if (playlistSelected) {
       setSongs(playlist);
+      setChangePlaylist(false);
     }
   }, [playlist, playlistSelected]);
 
@@ -80,7 +83,13 @@ const Home = () => {
         ))}
       </div>
       {playlistSelected && songs.length > 0 ? (
-        <App URL_BASE={URL_BASE} playlist={songs} folder={playlist.root} />
+        <App
+          URL_BASE={URL_BASE}
+          playlist={songs}
+          folder={playlist.root}
+          changePlaylist={changePlaylist}
+          setChangePlaylist={setChangePlaylist}
+        />
       ) : (
         <h1>¡Seleccciona una playlist para empezar!</h1>
       )}

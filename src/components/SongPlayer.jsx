@@ -2,7 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { Howl } from "howler";
 import PropTypes from "prop-types";
 
-const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFragments, volume, setSeek, userSeek }) => {
+const SongPlayer = ({
+  root,
+  artist,
+  song,
+  setPreviousSong,
+  setEndSong,
+  totalFragments,
+  volume,
+  setSeek,
+  userSeek,
+  changePlaylist,
+}) => {
   const sound = useRef(null);
   const numberOfFragments = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -181,12 +192,28 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
 
   //if song change when is not playing, start playing, if is playing stop and start playing
   useEffect(() => {
-    if (sound.current) {
-      sound.current.stop();
-      sound.current = null;
-      startPlaying();
+    if (changePlaylist) {
+      if (sound.current) {
+        sound.current.stop();
+        sound.current = null;
+        return;
+      }
+      return;
     }
-  }, [song]);
+
+    if (!changePlaylist) {
+      if (isPlaying) {
+        if (sound.current) {
+          sound.current.stop();
+          sound.current = null;
+          startPlaying();
+        }
+        startPlaying();
+      } else {
+        startPlaying();
+      }
+    }
+  }, [changePlaylist, song]);
 
   return (
     <div>
@@ -209,4 +236,5 @@ SongPlayer.propTypes = {
   volume: PropTypes.number,
   setSeek: PropTypes.func,
   userSeek: PropTypes.number,
+  changePlaylist: PropTypes.bool,
 };
