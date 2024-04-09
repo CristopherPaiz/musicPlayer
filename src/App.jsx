@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 
 const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) => {
   const [songs, setSongs] = useState(playlist);
-  const [selectedSong, setSelectedSong] = useState(songs[0]);
+  const [selectedSong, setSelectedSong] = useState(null);
   const [random, setRandom] = useState(false);
   const [endSong, setEndSong] = useState(false);
   const [volume, setVolume] = useState(0.5);
@@ -14,8 +14,14 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
   const [seek, setSeek] = useState(0);
   const [userSeek, setUserSeek] = useState(0);
 
+  //initialize selectedSong null
+  useEffect(() => {
+    setSelectedSong(null);
+  }, []);
+
   // CONTINUE SONGS
   useEffect(() => {
+    if (!selectedSong) return;
     const playNext = () => {
       if (endSong) {
         const index = songs.findIndex((song) => song.id === selectedSong.id);
@@ -26,7 +32,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
     };
 
     playNext();
-  }, [endSong, selectedSong.id, songs]);
+  }, [endSong, selectedSong, songs]);
 
   //previous song
   useEffect(() => {
@@ -64,8 +70,10 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //force refresh checkboxes when next song is pressed
   useEffect(() => {
-    setSelectedSong(selectedSong);
-    setChangePlaylist(false);
+    if (selectedSong) {
+      setChangePlaylist(false);
+      setSelectedSong(selectedSong);
+    }
   }, [selectedSong, setChangePlaylist]);
 
   //create mediaSession and update when selectedSong changes
@@ -75,6 +83,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
     // import(`./${folderRoot}/${folder}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
     //   setImage(module.default);
     // });
+    if (!selectedSong) return;
     setSeek(0);
 
     const fetchImages = async () => {
@@ -92,7 +101,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
   //listen changes playlist
   useEffect(() => {
     setSongs(playlist);
-    setSelectedSong(playlist[0]);
+    // setSelectedSong(playlist[0]);
     setSeek(0);
     setChangePlaylist(true);
   }, [playlist]);
@@ -105,10 +114,11 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //if seek is equal to song length, next song
   useEffect(() => {
+    if (!selectedSong) return;
     if (seek === parseInt(selectedSong.length)) {
       setEndSong(true);
     }
-  }, [seek, selectedSong.length]);
+  }, [seek, selectedSong]);
 
   return (
     <div>
@@ -122,7 +132,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
                 id={song.id}
                 name="song"
                 value={song.id}
-                checked={selectedSong.id === song.id}
+                checked={selectedSong ? selectedSong.id === song.id : false}
                 onChange={() => setSelectedSong(song)}
               />
               <label htmlFor={song.id}>
@@ -155,7 +165,11 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
       {/* render song title and artist */}
       <h2>
-        {selectedSong.title} - {selectedSong.artist}
+        {selectedSong && (
+          <>
+            {selectedSong.title} - {selectedSong.artist}
+          </>
+        )}
       </h2>
       <div style={{ width: "100%", display: "flex" }}>
         {/* <span>0:00</span> */}
@@ -166,11 +180,15 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
           value={seek}
           type="range"
           min="0"
-          max={selectedSong.length}
+          max={selectedSong ? selectedSong.length : 0}
           step="1"
           onChange={handleSeek}
         />
-        <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
+        {selectedSong && (
+          <>
+            <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
+          </>
+        )}
       </div>
 
       <br />
@@ -178,11 +196,11 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
       {/* SONGPLAYER */}
       <SongPlayer
         root={`${URL_BASE}${folder}`}
-        artist={selectedSong.artist}
-        song={selectedSong.title}
+        artist={selectedSong ? selectedSong.artist : ""}
+        song={selectedSong ? selectedSong.title : ""}
         setPreviousSong={setPreviousSong}
         setEndSong={setEndSong}
-        totalFragments={selectedSong.fragments}
+        totalFragments={selectedSong ? selectedSong.fragments : 0}
         volume={volume}
         setSeek={setSeek}
         userSeek={userSeek}

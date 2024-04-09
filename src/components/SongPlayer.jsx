@@ -66,7 +66,7 @@ const SongPlayer = ({
     if (numberOfFragments.current === 1) {
       setPreviousSong(true);
     }
-
+    setSeek(0);
     sound.current.stop();
     numberOfFragments.current = 1;
     sound.current = new Howl({
@@ -107,6 +107,7 @@ const SongPlayer = ({
 
   const resetPlaying = () => {
     setIsPlaying(false);
+    setSeek(0);
     numberOfFragments.current = 1;
     if (sound.current) {
       sound.current.stop();
@@ -192,6 +193,10 @@ const SongPlayer = ({
 
   //if song change when is not playing, start playing, if is playing stop and start playing
   useEffect(() => {
+    if (song === null || song === undefined) {
+      setIsPlaying(false);
+    }
+
     if (changePlaylist) {
       if (sound.current) {
         sound.current.stop();

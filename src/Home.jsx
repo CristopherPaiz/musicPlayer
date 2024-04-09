@@ -40,7 +40,6 @@ const Home = () => {
       const response = await fetch(URL_BASE + playlist.root + "/" + playlist.play + ".json");
       const data = await response.json();
       setSongs(data);
-      setChangePlaylist(true);
     };
     fetchPlaylists();
   }, [playlistSelected, playlist]);
@@ -49,7 +48,6 @@ const Home = () => {
   useEffect(() => {
     if (playlistSelected) {
       setSongs(playlist);
-      setChangePlaylist(false);
     }
   }, [playlist, playlistSelected]);
 
