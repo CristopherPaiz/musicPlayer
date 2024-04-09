@@ -25,7 +25,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
     const playNext = () => {
       if (endSong) {
         const index = songs.findIndex((song) => song.id === selectedSong.id);
-        setSelectedSong(songs[index + 1] || songs[0]);
+        setSelectedSong(songs[index + 1] || null);
         setPreviousSong(false);
         setEndSong(false);
       }
@@ -184,10 +184,12 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
           step="1"
           onChange={handleSeek}
         />
-        {selectedSong && (
+        {selectedSong ? (
           <>
             <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
           </>
+        ) : (
+          <span>00:00</span>
         )}
       </div>
 
