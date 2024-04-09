@@ -108,14 +108,7 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
       sound.current.stop();
       sound.current = null;
       setIsPlaying(false);
-      setIsPlaying(true);
-    } else {
-      sound.current = new Howl({
-        src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
-        volume: volume,
-        onend: playNext,
-      });
-      sound.current.play();
+      startPlaying();
       setIsPlaying(true);
     }
   }, [artist, song]);
@@ -183,9 +176,17 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
     if (sound.current) {
       sound.current.stop();
       sound.current = null;
-      setIsPlaying(false);
     }
   }, [root]);
+
+  //if song change when is not playing, start playing, if is playing stop and start playing
+  useEffect(() => {
+    if (sound.current) {
+      sound.current.stop();
+      sound.current = null;
+      startPlaying();
+    }
+  }, [song]);
 
   return (
     <div>
