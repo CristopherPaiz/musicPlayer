@@ -67,11 +67,15 @@ const App = ({ URL_BASE, playlist, folder }) => {
     setSelectedSong(selectedSong);
   }, [selectedSong]);
 
+  //create mediaSession and update when selectedSong changes
+
   //charge image dinamically
   useEffect(() => {
     // import(`./${folderRoot}/${folder}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
     //   setImage(module.default);
     // });
+    setSeek(0);
+
     const fetchImages = async () => {
       if (!playlist) return;
       const response = await fetch(
@@ -82,7 +86,6 @@ const App = ({ URL_BASE, playlist, folder }) => {
       setImage(url);
     };
     fetchImages();
-    setSeek(0);
   }, [selectedSong, URL_BASE, folder, folderRoot, playlist]);
 
   //listen changes playlist
@@ -127,7 +130,7 @@ const App = ({ URL_BASE, playlist, folder }) => {
           ))}
         </div>
         {/* render Image cover */}
-        {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
+        {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />}
       </div>
 
       {/* Checkbox for randomizer */}

@@ -52,28 +52,18 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
   };
 
   const playPrevious = async () => {
-    numberOfFragments.current--;
-    if (numberOfFragments.current < 1) {
+    if (numberOfFragments.current === 1) {
       setPreviousSong(true);
-    } else {
-      numberOfFragments.current = 1;
-      sound.current.stop();
-      setPreviousSong(false);
-      // import(`${root}/${artist}/${song}/1.mp3`).then((module) => {
-      //   sound.current = new Howl({
-      //     src: [module.default],
-      //     volume: sound.current.volume(),
-      //     onend: playPrevious,
-      //   });
-      //   sound.current.play();
-      // });
-      sound.current = new Howl({
-        src: `${root}/${artist}/${song}/1.mp3`,
-        volume: sound.current.volume(),
-        onend: playPrevious,
-      });
-      sound.current.play();
     }
+
+    sound.current.stop();
+    numberOfFragments.current = 1;
+    sound.current = new Howl({
+      src: `${root}/${artist}/${song}/1.mp3`,
+      volume: sound.current.volume(),
+      onend: playNext,
+    });
+    sound.current.play();
   };
 
   const startPlaying = async () => {
@@ -118,7 +108,14 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
       sound.current.stop();
       sound.current = null;
       setIsPlaying(false);
-      startPlaying();
+      setIsPlaying(true);
+    } else {
+      sound.current = new Howl({
+        src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
+        volume: volume,
+        onend: playNext,
+      });
+      sound.current.play();
       setIsPlaying(true);
     }
   }, [artist, song]);
@@ -180,6 +177,15 @@ const SongPlayer = ({ root, artist, song, setPreviousSong, setEndSong, totalFrag
       sound.current.seek(seekPlayer);
     }
   }, [seekPlayer]);
+
+  //if root changes stop sound
+  useEffect(() => {
+    if (sound.current) {
+      sound.current.stop();
+      sound.current = null;
+      setIsPlaying(false);
+    }
+  }, [root]);
 
   return (
     <div>

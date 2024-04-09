@@ -43,6 +43,13 @@ const Home = () => {
     fetchPlaylists();
   }, [playlistSelected, playlist]);
 
+  //update folder
+  useEffect(() => {
+    if (playlistSelected) {
+      setSongs(playlist);
+    }
+  }, [playlist, playlistSelected]);
+
   return (
     <>
       {/* Show playlist div is onClinck and coloring background only playlist selected */}
