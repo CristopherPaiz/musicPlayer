@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import SongPlayer from "./components/SongPlayer";
+import { FastAverageColor } from "fast-average-color";
 import PropTypes from "prop-types";
 
 const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) => {
@@ -119,6 +120,22 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
       setEndSong(true);
     }
   }, [seek, selectedSong]);
+
+  //GET COLOR IMAGE AND SET BACKGROUND AND COLOR
+  useEffect(() => {
+    if (!image) return;
+    const fac = new FastAverageColor();
+    fac
+      .getColorAsync(image, { algorithm: "dominant" })
+      .then((color) => {
+        const root = document.documentElement;
+        root.style.setProperty("background-color", color.hex);
+        root.style.setProperty("color", color.isDark ? "white" : "black");
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  }, [image]);
 
   return (
     <div>

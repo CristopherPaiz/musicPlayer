@@ -65,7 +65,7 @@ const Home = () => {
               cursor: "pointer",
               alignItems: "center",
               lineHeight: "0",
-              backgroundColor: playlistSelected && plays.id === playlist.id ? "lightblue" : "white",
+              backgroundColor: playlistSelected && plays.id === playlist.id ? "limegreen" : "transparent",
             }}
           >
             <h2>{plays.name}</h2>
