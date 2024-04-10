@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import SongPlayer from "./components/SongPlayer";
 import { FastAverageColor } from "fast-average-color";
 import PropTypes from "prop-types";
+import Lyrics from "./components/Lyrics";
 
 const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) => {
   const [songs, setSongs] = useState(playlist);
@@ -14,6 +15,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
   const [folderRoot] = useState("Music");
   const [seek, setSeek] = useState(0);
   const [userSeek, setUserSeek] = useState(0);
+  const [lyrics, setLyrics] = useState(null);
 
   //initialize selectedSong null
   useEffect(() => {
@@ -99,6 +101,27 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
     fetchImages();
   }, [selectedSong, URL_BASE, folder, folderRoot, playlist]);
 
+  //charge LRC lyrics dinamically
+  useEffect(() => {
+    if (!selectedSong) return;
+    const fetchLyrics = async () => {
+      try {
+        const response = await fetch(
+          URL_BASE + folder + "/" + selectedSong.artist + "/" + selectedSong.title + "/" + "lyrics.lrc"
+        );
+        const data = await response.text();
+        if (data.includes("NoSuchKey")) {
+          setLyrics(null);
+          return;
+        }
+        setLyrics(data);
+      } catch (error) {
+        setLyrics(null);
+      }
+    };
+    fetchLyrics();
+  }, [selectedSong, URL_BASE, folder]);
+
   //listen changes playlist
   useEffect(() => {
     setSongs(playlist);
@@ -159,7 +182,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
           ))}
         </div>
         {/* render Image cover */}
-        {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />}
+        {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
       </div>
 
       {/* Checkbox for randomizer */}
@@ -225,6 +248,21 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
         userSeek={userSeek}
         changePlaylist={changePlaylist}
       />
+
+      <br />
+      <br />
+      {selectedSong && (
+        <div>
+          <h3>Letra</h3>
+          {lyrics === null ? (
+            <div>No hay letra disponible</div>
+          ) : (
+            <>
+              <Lyrics lyrics={lyrics} timeElapsed={seek} />
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };

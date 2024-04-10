@@ -28,5 +28,15 @@
     "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTh08C1KBayaulyw-wzRbyzlBnY4991tnInjDPI9yvABg&s",
     "play": "general",
     "root": "General"
+  },
+  {
+    "id": 4,
+    "name": "Melendi",
+    "description": "Una playlist de Melendi para esos corazones rotos y despechados",
+    "tracks": 4,
+    "artist": "Melendi",
+    "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTym8vhCWLP5PU4z-46m29CcIBKjq9gjfDkFHiuGTr26A&s",
+    "play": "melendi",
+    "root": "Melendi"
   }
 ]

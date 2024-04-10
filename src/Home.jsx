@@ -54,7 +54,7 @@ const Home = () => {
   return (
     <>
       {/* Show playlist div is onClinck and coloring background only playlist selected */}
-      <div style={{ display: "flex", gap: "2rem" }}>
+      <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
         {playlists.map((plays) => (
           <div
             key={plays.id}
