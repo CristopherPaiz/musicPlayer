@@ -21,25 +21,30 @@ const SongPlayer = ({
   const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
+    let attemptCount = 0; // Initialize attempt counter
+
     const preloadNext = () => {
+      if (attemptCount >= 2) {
+        clearInterval(preloadTimer);
+        return;
+      }
+
       const nextFragment = numberOfFragments.current + 1;
-      // import(`${root}/${artist}/${song}/${nextFragment}.mp3`).then((module) => {
-      //   new Howl({
-      //     src: [module.default],
-      //   });
-      // });
-      new Howl({
+      const howl = new Howl({
         src: `${root}/${artist}/${song}/${nextFragment}.mp3`,
         preload: true,
         format: ["mp3"],
+        onloaderror: () => {
+          attemptCount++;
+        },
       });
 
-      if (nextFragment === totalFragments) {
-        clearInterval(preloadTimer);
-      }
+      howl.once("load", () => {
+        attemptCount = 0;
+      });
     };
 
-    const preloadTimer = setInterval(preloadNext, 6000);
+    const preloadTimer = setInterval(preloadNext, 5000);
 
     return () => {
       clearInterval(preloadTimer);
@@ -80,7 +85,6 @@ const SongPlayer = ({
   };
 
   const startPlaying = async () => {
-    console.log("startPlaying");
     setIsPlaying(true);
     if (!sound.current) {
       numberOfFragments.current = 1;

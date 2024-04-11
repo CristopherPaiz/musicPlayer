@@ -19,13 +19,11 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //initialize selectedSong null
   useEffect(() => {
-    console.log("cancion nula");
     setSelectedSong(null);
   }, []);
 
   // CONTINUE SONGS
   useEffect(() => {
-    console.log("continuarCanciones");
     if (!selectedSong) return;
     const playNext = () => {
       if (endSong) {
@@ -41,7 +39,6 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //previous song
   useEffect(() => {
-    console.log("cancionAnterior");
     const playPrevious = () => {
       if (previousSong) {
         const index = songs.findIndex((song) => song.id === selectedSong.id);
@@ -55,7 +52,6 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
   }, [previousSong]);
 
   useEffect(() => {
-    console.log("shuffleArray");
     function shuffleArray(array) {
       const shuffledArray = [...array];
       for (let i = shuffledArray.length - 1; i > 0; i--) {
@@ -77,7 +73,6 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //force refresh checkboxes when next song is pressed
   useEffect(() => {
-    console.log("cambioPlaylist");
     if (selectedSong) {
       setChangePlaylist(false);
       setSelectedSong(selectedSong);
@@ -86,7 +81,6 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //charge image dinamically
   useEffect(() => {
-    console.log("cargandoImagen");
     // import(`./${folderRoot}/${folder}/${selectedSong.artist}/${selectedSong.title}/cover.webp`).then((module) => {
     //   setImage(module.default);
     // });
@@ -107,7 +101,6 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //charge LRC lyrics dinamically
   useEffect(() => {
-    console.log("cargandoLetra");
     if (!selectedSong) return;
     const fetchLyrics = async () => {
       try {
@@ -129,7 +122,6 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //listen changes playlist
   useEffect(() => {
-    console.log("cambioPlaylist2");
     setSongs(playlist);
     // setSelectedSong(playlist[0]);
     setSeek(0);
@@ -152,7 +144,6 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
 
   //GET COLOR IMAGE AND SET BACKGROUND AND COLOR
   useEffect(() => {
-    console.log("cambioColor");
     if (!image) return;
     const fac = new FastAverageColor();
     //destroy fac instance

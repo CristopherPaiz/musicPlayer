@@ -1,35 +1,35 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 const Lyrics = ({ lyrics, timeElapsed }) => {
-  const [currentLines, setCurrentLines] = useState([]);
-  const [selectedLineTime, setSelectedLineTime] = useState(null);
-  const lyricsRef = useRef(null);
+  const [currentLines, setCurrentLines] = useState(Array(10).fill(""));
 
   useEffect(() => {
     const lines = lyrics.split("\n");
+    //add time to final line
     lines.push("[99:99.00]");
-    setCurrentLines(lines);
-  }, [lyrics]);
 
-  useEffect(() => {
-    if (selectedLineTime !== null) {
-      const index = currentLines.findIndex((line) => line.startsWith(`[${selectedLineTime}]`));
-      if (index !== -1 && lyricsRef.current) {
-        const selectedLineElement = lyricsRef.current.children[index];
-        selectedLineElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timeElapsedInSeconds = timeElapsed;
+    for (let i = 0; i < lines.length; i++) {
+      const time = lines[i + 1].substring(1, 9);
+      const minutes = parseInt(time.split(":")[0]);
+      const seconds = parseFloat(time.split(":")[1]);
+      const totalTimeInSeconds = minutes * 60 + seconds;
+      if (totalTimeInSeconds > timeElapsedInSeconds) {
+        let newLines = Array(10).fill("");
+        for (let j = -5; j <= 5; j++) {
+          if (i + j >= 0 && i + j < lines.length) {
+            newLines[j + 5] = lines[i + j].substring(10);
+          }
+        }
+        setCurrentLines(newLines);
+        break;
       }
     }
-  }, [selectedLineTime, currentLines]);
-
-  const handleClick = (line) => {
-    const time = line.substring(1, 9);
-    setSelectedLineTime(time);
-  };
+  }, [timeElapsed, lyrics]);
 
   return (
     <div
-      ref={lyricsRef}
       style={{
         width: "400px",
         height: "300px",
@@ -39,19 +39,15 @@ const Lyrics = ({ lyrics, timeElapsed }) => {
         alignItems: "center",
         gap: "10px",
         backgroundColor: "rgba(0, 0, 0, 0.5)",
-        overflow: "auto",
+        overflow: "hidden",
         marginBottom: "100px",
         padding: "20px 10px 10px 10px",
         textWrap: "wrap",
       }}
     >
       {currentLines.map((line, index) => (
-        <p
-          key={index}
-          style={{ color: index === 5 ? "red" : "white", padding: "0", lineHeigh: "1", margin: "5px" }}
-          onClick={() => handleClick(line)}
-        >
-          {line.substring(10)}
+        <p key={index} style={{ color: index === 5 ? "red" : "white", padding: "0", lineHeigh: "1", margin: "5px" }}>
+          {line}
         </p>
       ))}
     </div>
