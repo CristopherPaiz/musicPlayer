@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* define root and variable */
 :root {
   --background-color: #f3f3f3;
