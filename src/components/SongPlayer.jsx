@@ -20,15 +20,24 @@ const SongPlayer = ({
   const [seekPlayer, setSeekPlayer] = useState(0);
 
   useEffect(() => {
+    let attemptCount = 0;
+
     const preloadNext = () => {
+      if (attemptCount >= 2) {
+        clearInterval(preloadTimer);
+        return;
+      }
+
       const nextFragment = numberOfFragments.current + 1;
-      // import(`${root}/${artist}/${song}/${nextFragment}.mp3`).then((module) => {
-      //   new Howl({
-      //     src: [module.default],
-      //   });
-      // });
-      new Howl({
+      const howl = new Howl({
         src: `${root}/${artist}/${song}/${nextFragment}.mp3`,
+        onloaderror: () => {
+          attemptCount++;
+        },
+      });
+
+      howl.once("load", () => {
+        attemptCount = 0;
       });
     };
 
@@ -193,7 +202,7 @@ const SongPlayer = ({
 
   //if song change when is not playing, start playing, if is playing stop and start playing
   useEffect(() => {
-    if (song === null || song === undefined) {
+    if (song === null || song === undefined || song === "") {
       setIsPlaying(false);
     }
 
