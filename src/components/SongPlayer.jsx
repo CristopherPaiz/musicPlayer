@@ -18,30 +18,28 @@ const SongPlayer = ({
   const numberOfFragments = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [seekPlayer, setSeekPlayer] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
-    let attemptCount = 0;
-
     const preloadNext = () => {
-      if (attemptCount >= 2) {
-        clearInterval(preloadTimer);
-        return;
-      }
-
       const nextFragment = numberOfFragments.current + 1;
-      const howl = new Howl({
+      // import(`${root}/${artist}/${song}/${nextFragment}.mp3`).then((module) => {
+      //   new Howl({
+      //     src: [module.default],
+      //   });
+      // });
+      new Howl({
         src: `${root}/${artist}/${song}/${nextFragment}.mp3`,
-        onloaderror: () => {
-          attemptCount++;
-        },
+        preload: true,
+        format: ["mp3"],
       });
 
-      howl.once("load", () => {
-        attemptCount = 0;
-      });
+      if (nextFragment === totalFragments) {
+        clearInterval(preloadTimer);
+      }
     };
 
-    const preloadTimer = setInterval(preloadNext, 5000);
+    const preloadTimer = setInterval(preloadNext, 6000);
 
     return () => {
       clearInterval(preloadTimer);
@@ -54,20 +52,15 @@ const SongPlayer = ({
       setEndSong(true);
     } else {
       setEndSong(false);
-      // import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
-      //   sound.current = new Howl({
-      //     src: [module.default],
-      //     volume: sound.current.volume(),
-      //     onend: playNext,
-      //   });
-      //   sound.current.play();
-      // });
       sound.current = new Howl({
         src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
+        format: ["mp3"],
+        preload: true,
         volume: sound.current.volume(),
         onend: playNext,
       });
       sound.current.play();
+      //add time of the fragment to the seek
     }
   };
 
@@ -75,8 +68,8 @@ const SongPlayer = ({
     if (numberOfFragments.current === 1) {
       setPreviousSong(true);
     }
-    setSeek(0);
     sound.current.stop();
+    setSeek(0);
     numberOfFragments.current = 1;
     sound.current = new Howl({
       src: `${root}/${artist}/${song}/1.mp3`,
@@ -87,6 +80,7 @@ const SongPlayer = ({
   };
 
   const startPlaying = async () => {
+    console.log("startPlaying");
     setIsPlaying(true);
     if (!sound.current) {
       numberOfFragments.current = 1;
@@ -129,7 +123,6 @@ const SongPlayer = ({
       sound.current.stop();
       sound.current = null;
       setIsPlaying(false);
-      startPlaying();
       setIsPlaying(true);
     }
   }, [artist, song]);
@@ -143,16 +136,22 @@ const SongPlayer = ({
 
   //print each second the current time
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (sound.current) {
-        setSeek(numberOfFragments.current * 10 + sound.current.seek() - 10);
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(timer);
-    };
+    // if sound is playing, set ttime to setSeek
+    if (sound.current) {
+      sound.current.on("play", () => {
+        setInterval(() => {
+          setElapsedTime(sound.current.seek());
+        }, 1015);
+      });
+    }
   }, [sound.current]);
+
+  //listen elapsed time
+  useEffect(() => {
+    if (sound.current && parseInt(elapsedTime) >= 0 && parseInt(elapsedTime) <= 10) {
+      setSeek(numberOfFragments.current * 10 + sound.current.seek() - 10);
+    }
+  }, [elapsedTime, setSeek]);
 
   //if userSeek has changed, change seek of the player change the fragment number and the seek of the player
   useEffect(() => {
@@ -183,7 +182,7 @@ const SongPlayer = ({
       };
       fetchNewFragment();
     }
-  }, [userSeek]);
+  }, [userSeek, volume, root, artist, song, totalFragments]);
 
   //if seekPlayer change seek current fragment
   useEffect(() => {
@@ -206,12 +205,10 @@ const SongPlayer = ({
       setIsPlaying(false);
     }
 
-    if (changePlaylist) {
-      if (sound.current) {
-        sound.current.stop();
-        sound.current = null;
-        return;
-      }
+    if (changePlaylist && sound.current) {
+      sound.current.stop();
+      sound.current = null;
+      setIsPlaying(false);
       return;
     }
 
@@ -220,7 +217,6 @@ const SongPlayer = ({
         if (sound.current) {
           sound.current.stop();
           sound.current = null;
-          startPlaying();
         }
         startPlaying();
       } else {
