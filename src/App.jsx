@@ -17,7 +17,6 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   const [userSeek, setUserSeek] = useState(0);
   const [lyrics, setLyrics] = useState(null);
 
-  console.log(songs);
   //initialize selectedSong null
   useEffect(() => {
     setSelectedSong(null);
@@ -179,19 +178,20 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
           {/* PLAYLIST PRINCIPAL */}
           {!selectedSong ? (
             <div className="w-full flex flex-col flex-1 h-full p-5">
-              <div className="grid-rows-6 flex text-center">
+              <div className="grid-rows-6 flex text-center  font-bold text-xl mb-5">
                 <p className="w-1/12">#</p>
                 <p className="w-1/12"></p>
-                <p className="w-1/3">Titulo</p>
+                <p className="w-1/3 text-left">Titulo</p>
+                <p className="w-1/3">Artista</p>
                 <p className="w-1/6">Album</p>
-                <p className="w-1/6">Fecha</p>
                 <p className="w-1/6">Duración</p>
+                <p className="w-1/6">Fecha</p>
               </div>
               {songs.map((song) => (
                 <div
                   key={song.id}
                   onClick={() => setSelectedSong(song)}
-                  className="p-5 text-center cursor-pointer py-3 bg-black/10 border-white/30 border-2 grid-rows-6 rounded-md my-1 flex items-center"
+                  className="text-center cursor-pointer mb-1 grid-rows-6 rounded-md flex items-center bg-slate-700/5 border-2 border-white/50 w-full hover:bg-slate-700/20 transition duration-300 ease-in-out py-6 max-h-20"
                 >
                   <p className="w-1/12">{song.id}</p>
                   <div className="w-1/12">
@@ -202,13 +202,11 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                       className="w-10 h-10 object-cover rounded-md mr-3"
                     />
                   </div>
-                  <div className="w-1/3 text-left font-bold text-lg flex flex-col">
-                    <p>{song.title}</p>
-                    <p>{song.artist}</p>
-                  </div>
+                  <p className="w-1/3 text-left font-semibold text-lg flex flex-col">{song.title}</p>
+                  <p className="w-1/3 text-lg flex flex-col">{song.artist}</p>
                   <p className="w-1/6">{song.album}</p>
-                  <p className="w-1/6">{song.date.substr(0, 4)}</p>
                   <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
+                  <p className="w-1/6">{song.date.substr(0, 4)}</p>
                 </div>
               ))}
               {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
