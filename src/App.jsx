@@ -4,7 +4,7 @@ import { FastAverageColor } from "fast-average-color";
 import PropTypes from "prop-types";
 import Lyrics from "./components/Lyrics";
 
-const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) => {
+const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChangePlaylist }) => {
   const [songs, setSongs] = useState(playlist);
   const [selectedSong, setSelectedSong] = useState(null);
   const [random, setRandom] = useState(false);
@@ -17,6 +17,7 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
   const [userSeek, setUserSeek] = useState(0);
   const [lyrics, setLyrics] = useState(null);
 
+  console.log(songs);
   //initialize selectedSong null
   useEffect(() => {
     setSelectedSong(null);
@@ -161,106 +162,164 @@ const App = ({ URL_BASE, playlist, folder, changePlaylist, setChangePlaylist }) 
   }, [image]);
 
   return (
-    <div>
-      {/* Checkbox to select song */}
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {songs.map((song) => (
-            <div key={song.id}>
-              <input
-                type="radio"
-                id={song.id}
-                name="song"
-                value={song.id}
-                checked={selectedSong ? selectedSong.id === song.id : false}
-                onChange={() => setSelectedSong(song)}
-              />
-              <label htmlFor={song.id}>
-                {song.artist} - {song.title}
-              </label>
+    <div className="w-full h-screen overflow-y-hidden flex">
+      <div className="flex flex-col w-full">
+        {/* TITULO PLAYLIST */}
+        <article className="flex p-4 bg-gradient-to-r from-slate-700 to-white/0 gap-x-4 items-center text-white">
+          <img src={playlistData.cover} alt={playlistData.name} className="w-32 h-32 rounded-2xl" />
+          <div className="flex flex-col w-full max-h-w-32 gap-y-1">
+            <h1 className="font-bold uppercase text-4xl">{playlistData.name}</h1>
+            <h2 className="text-2xl">{playlistData.artist}</h2>
+            <p className="text-xl font-thin">{playlistData.description}</p>
+          </div>
+        </article>
+
+        {/* CENTER */}
+        <div className="w-full flex flex-row overflow-y-auto">
+          {/* PLAYLIST PRINCIPAL */}
+          {!selectedSong ? (
+            <div className="w-full flex flex-col flex-1 h-full p-5">
+              <div className="grid-rows-6 flex text-center">
+                <p className="w-1/12">#</p>
+                <p className="w-1/12"></p>
+                <p className="w-1/3">Titulo</p>
+                <p className="w-1/6">Album</p>
+                <p className="w-1/6">Fecha</p>
+                <p className="w-1/6">Duración</p>
+              </div>
+              {songs.map((song) => (
+                <div
+                  key={song.id}
+                  onClick={() => setSelectedSong(song)}
+                  className="p-5 text-center cursor-pointer py-3 bg-black/10 border-white/30 border-2 grid-rows-6 rounded-md my-1 flex items-center"
+                >
+                  <p className="w-1/12">{song.id}</p>
+                  <div className="w-1/12">
+                    <img
+                      src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
+                      alt="cover"
+                      loading="lazy"
+                      className="w-10 h-10 object-cover rounded-md mr-3"
+                    />
+                  </div>
+                  <div className="w-1/3 text-left font-bold text-lg flex flex-col">
+                    <p>{song.title}</p>
+                    <p>{song.artist}</p>
+                  </div>
+                  <p className="w-1/6">{song.album}</p>
+                  <p className="w-1/6">{song.date.substr(0, 4)}</p>
+                  <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
+                </div>
+              ))}
+              {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
             </div>
-          ))}
-        </div>
-        {/* render Image cover */}
-        {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
-      </div>
-
-      {/* Checkbox for randomizer */}
-      <div>
-        <input type="checkbox" id="random" name="random" checked={random} onChange={() => setRandom(!random)} />
-        <label htmlFor="random">Random</label>
-      </div>
-
-      {/* slider range for volume */}
-      <div>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volume}
-          onChange={(e) => setVolume(parseFloat(e.target.value))}
-        />
-      </div>
-
-      {/* render song title and artist */}
-      <h2>
-        {selectedSong && (
-          <>
-            {selectedSong.title} - {selectedSong.artist}
-          </>
-        )}
-      </h2>
-      <div style={{ width: "100%", display: "flex" }}>
-        {/* <span>0:00</span> */}
-        <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
-        {/* duation bar based on selectedSong.length like input range*/}
-        <input
-          style={{ flex: "1" }}
-          value={seek}
-          type="range"
-          min="0"
-          max={selectedSong ? selectedSong.length : 0}
-          step="1"
-          onChange={handleSeek}
-        />
-        {selectedSong ? (
-          <>
-            <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
-          </>
-        ) : (
-          <span>00:00</span>
-        )}
-      </div>
-
-      <br />
-
-      {/* SONGPLAYER */}
-      <SongPlayer
-        root={`${URL_BASE}${folder}`}
-        artist={selectedSong ? selectedSong.artist : ""}
-        song={selectedSong ? selectedSong.title : ""}
-        setPreviousSong={setPreviousSong}
-        setEndSong={setEndSong}
-        totalFragments={selectedSong ? selectedSong.fragments : 0}
-        volume={volume}
-        setSeek={setSeek}
-        userSeek={userSeek}
-        changePlaylist={changePlaylist}
-      />
-
-      <br />
-      <br />
-      {selectedSong && (
-        <div>
-          <h3>Letra</h3>
-          {lyrics === null ? (
-            <div>No hay letra disponible</div>
           ) : (
-            <>
-              <Lyrics lyrics={lyrics} timeElapsed={seek} />
-            </>
+            <div className="flex flex-col w-full flex-1 p-5">
+              <h2>
+                {/* render song title and artist */}
+                {selectedSong && (
+                  <>
+                    {selectedSong.title} - {selectedSong.artist}
+                  </>
+                )}
+              </h2>
+
+              {/* Checkbox for randomizer */}
+              <div>
+                <input type="checkbox" id="random" name="random" checked={random} onChange={() => setRandom(!random)} />
+                <label htmlFor="random">Random</label>
+              </div>
+
+              {/* slider range for volume */}
+              <div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                />
+              </div>
+
+              {/* TIME BAR */}
+              <div style={{ width: "100%", display: "flex" }}>
+                {/* <span>0:00</span> */}
+                <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
+                {/* duation bar based on selectedSong.length like input range*/}
+                <input
+                  style={{ flex: "1" }}
+                  value={seek}
+                  type="range"
+                  min="0"
+                  max={selectedSong ? selectedSong.length : 0}
+                  step="1"
+                  onChange={handleSeek}
+                />
+                {selectedSong ? (
+                  <>
+                    <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
+                  </>
+                ) : (
+                  <span>00:00</span>
+                )}
+              </div>
+
+              {/* SONGPLAYER */}
+              <SongPlayer
+                root={`${URL_BASE}${folder}`}
+                artist={selectedSong ? selectedSong.artist : ""}
+                song={selectedSong ? selectedSong.title : ""}
+                setPreviousSong={setPreviousSong}
+                setEndSong={setEndSong}
+                totalFragments={selectedSong ? selectedSong.fragments : 0}
+                volume={volume}
+                setSeek={setSeek}
+                userSeek={userSeek}
+                changePlaylist={changePlaylist}
+              />
+
+              {/* LYRICS */}
+              {selectedSong && (
+                <div>
+                  <h3>Letra</h3>
+                  {lyrics === null ? (
+                    <div>No hay letra disponible</div>
+                  ) : (
+                    <>
+                      <Lyrics lyrics={lyrics} timeElapsed={seek} />
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           )}
+        </div>
+      </div>
+      {/* RIGHT */}
+      {selectedSong && (
+        <div className="w-[280px]">
+          <>
+            <div className="overflow-y-auto p-5">
+              <div>
+                {songs.map((song) => (
+                  <div key={song.id}>
+                    <input
+                      type="radio"
+                      id={song.id}
+                      name="song"
+                      value={song.id}
+                      checked={selectedSong ? selectedSong.id === song.id : false}
+                      onChange={() => setSelectedSong(song)}
+                    />
+                    <label htmlFor={song.id}>
+                      {song.artist} - {song.title}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
         </div>
       )}
     </div>
@@ -273,6 +332,7 @@ App.propTypes = {
   URL_BASE: PropTypes.string,
   playlist: PropTypes.array,
   folder: PropTypes.string,
+  playlistData: PropTypes.object,
   changePlaylist: PropTypes.bool,
   setChangePlaylist: PropTypes.func,
 };
