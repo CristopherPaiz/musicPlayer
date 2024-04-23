@@ -186,7 +186,7 @@ const SongPlayer = ({
       };
       fetchNewFragment();
     }
-  }, [userSeek, volume, root, artist, song, totalFragments]);
+  }, [userSeek, root, artist, song, totalFragments]);
 
   //if seekPlayer change seek current fragment
   useEffect(() => {

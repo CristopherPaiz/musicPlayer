@@ -16,6 +16,9 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   const [seek, setSeek] = useState(0);
   const [userSeek, setUserSeek] = useState(0);
   const [lyrics, setLyrics] = useState(null);
+  const [color, setColor] = useState(null);
+  const [colorDark, setColorDark] = useState(null);
+  const [colorText, setColorText] = useState(null);
 
   console.log(songs);
   //initialize selectedSong null
@@ -149,12 +152,18 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
     const fac = new FastAverageColor();
     //destroy fac instance
     fac.destroy();
+    setColor(null);
     fac
       .getColorAsync(image, { algorithm: "dominant", mode: "speed" })
       .then((color) => {
         const root = document.documentElement;
         root.style.setProperty("background-color", color.hex);
         root.style.setProperty("color", color.isDark ? "white" : "black");
+        setColor(color.hex);
+        // reduce the color to 10% to get a darker color
+        const darkColor = color.value.map((c) => c * 1.5);
+        setColorDark(`rgb(${darkColor.join(",")})`);
+        setColorText(color.isDark ? "white" : "black");
       })
       .catch((e) => {
         console.error(e);
@@ -162,10 +171,16 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   }, [image]);
 
   return (
-    <div className="w-full h-screen overflow-y-hidden flex">
+    <div className="w-full h-screen flex max-h-screen">
       <div className="flex flex-col w-full">
         {/* TITULO PLAYLIST */}
-        <article className="flex p-4 bg-gradient-to-r from-slate-700 to-white/0 gap-x-4 items-center text-white">
+        <article
+          style={{
+            background: `linear-gradient(90deg, ${colorDark} 0%, ${color} 100%)`,
+            color: colorText,
+          }}
+          className="flex p-4 gap-x-4 items-center"
+        >
           <img src={playlistData.cover} alt={playlistData.name} className="w-32 h-32 rounded-2xl" />
           <div className="flex flex-col w-full max-h-w-32 gap-y-1">
             <h1 className="font-bold uppercase text-4xl">{playlistData.name}</h1>
@@ -175,10 +190,10 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
         </article>
 
         {/* CENTER */}
-        <div className="w-full flex flex-row overflow-y-auto">
+        <div className="w-full flex flex-row mb-5 overflow-y-auto">
           {/* PLAYLIST PRINCIPAL */}
           {!selectedSong ? (
-            <div className="w-full flex flex-col flex-1 h-full p-5">
+            <div className="w-full flex flex-col h-full p-5">
               <div className="grid-rows-6 flex text-center">
                 <p className="w-1/12">#</p>
                 <p className="w-1/12"></p>
@@ -191,7 +206,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                 <div
                   key={song.id}
                   onClick={() => setSelectedSong(song)}
-                  className="p-5 text-center cursor-pointer py-3 bg-black/10 border-white/30 border-2 grid-rows-6 rounded-md my-1 flex items-center"
+                  className="text-center cursor-pointer py-3 bg-black/10 border-white/30 border-2 grid-rows-6 rounded-md my-1 flex items-center"
                 >
                   <p className="w-1/12">{song.id}</p>
                   <div className="w-1/12">
@@ -298,28 +313,40 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
       </div>
       {/* RIGHT */}
       {selectedSong && (
-        <div className="w-[280px]">
-          <>
-            <div className="overflow-y-auto p-5">
-              <div>
-                {songs.map((song) => (
-                  <div key={song.id}>
-                    <input
-                      type="radio"
-                      id={song.id}
-                      name="song"
-                      value={song.id}
-                      checked={selectedSong ? selectedSong.id === song.id : false}
-                      onChange={() => setSelectedSong(song)}
+        <div className="w-[280px] overflow-y-auto bg-black/10">
+          <div
+            style={{
+              backgroundColor: color,
+              filter: "brightness(0.90)",
+            }}
+            className={`text-2xl font-bold text-center py-2 sticky top-0`}
+          >
+            <h3 className="pt-2 pb-3">En cola</h3>
+          </div>
+          <div className="pl-3 pr-2 pb-5">
+            {songs.map((song) => (
+              <div key={song.id}>
+                <div
+                  key={song.id}
+                  onClick={() => setSelectedSong(song)}
+                  className="cursor-pointer flex flex-row items-center hover:bg-slate-500/50 px-2 py-2 rounded-md"
+                >
+                  <div>
+                    <img
+                      src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
+                      alt="cover"
+                      loading="lazy"
+                      className="size-[35px] min-w-[35px] object-cover rounded-md"
                     />
-                    <label htmlFor={song.id}>
-                      {song.artist} - {song.title}
-                    </label>
                   </div>
-                ))}
+                  <div className="flex flex-col overflow-hidden">
+                    <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[15px]">{song.title}</p>
+                    <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[12px]">{song.artist}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </>
+            ))}
+          </div>
         </div>
       )}
     </div>

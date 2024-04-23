@@ -49,7 +49,7 @@ const Home = () => {
   return (
     <>
       {/* Main */}
-      <div className="flex flex-row w-full h-screen overflow-hidden">
+      <div className="flex flex-row w-full h-screen overflow-hidden hover:cursor-default">
         {/* LEFT */}
         <div className="sm:w-[15%] py-5 bg-slate-700 text-black pr-3">
           <div className="flex w-full justify-center items-center">
