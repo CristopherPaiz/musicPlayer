@@ -32,7 +32,7 @@ const Lyrics = ({ lyrics, timeElapsed }) => {
     <div
       style={{
         width: "400px",
-        height: "300px",
+        height: "325px",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -40,7 +40,6 @@ const Lyrics = ({ lyrics, timeElapsed }) => {
         gap: "10px",
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         overflow: "hidden",
-        marginBottom: "100px",
         padding: "20px 10px 10px 10px",
         textWrap: "wrap",
       }}

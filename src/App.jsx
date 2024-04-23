@@ -233,87 +233,89 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                   <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
                 </div>
               ))}
-              {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
             </div>
           ) : (
+            // PLAYING SONG
             <div className="flex flex-col w-full flex-1 p-5">
-              <h2>
-                {/* render song title and artist */}
-                {selectedSong && (
-                  <>
-                    {selectedSong.title} - {selectedSong.artist}
-                  </>
-                )}
-              </h2>
-
-              {/* Checkbox for randomizer */}
+              <div className="flex flex-row p-5 gap-8 w-full">
+                <div>{image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />}</div>
+                <div className="overflow-x-hidden">
+                  {/* TITLE */}
+                  <h2 className="text-4xl font-bold text-nowrap text-ellipsis overflow-hidden">{selectedSong.title}</h2>
+                  <h2 className="text-2xl text-nowrap text-ellipsis overflow-hidden">{selectedSong.artist}</h2>
+                  {/* LYRICS */}
+                  <div>
+                    {lyrics === null ? (
+                      <div>No hay letra disponible</div>
+                    ) : (
+                      <>
+                        <Lyrics lyrics={lyrics} timeElapsed={seek} />
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
               <div>
-                <input type="checkbox" id="random" name="random" checked={random} onChange={() => setRandom(!random)} />
-                <label htmlFor="random">Random</label>
-              </div>
-
-              {/* slider range for volume */}
-              <div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
-                />
-              </div>
-
-              {/* TIME BAR */}
-              <div style={{ width: "100%", display: "flex" }}>
-                {/* <span>0:00</span> */}
-                <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
-                {/* duation bar based on selectedSong.length like input range*/}
-                <input
-                  style={{ flex: "1" }}
-                  value={seek}
-                  type="range"
-                  min="0"
-                  max={selectedSong ? selectedSong.length : 0}
-                  step="1"
-                  onChange={handleSeek}
-                />
-                {selectedSong ? (
-                  <>
-                    <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
-                  </>
-                ) : (
-                  <span>00:00</span>
-                )}
-              </div>
-
-              {/* SONGPLAYER */}
-              <SongPlayer
-                root={`${URL_BASE}${folder}`}
-                artist={selectedSong ? selectedSong.artist : ""}
-                song={selectedSong ? selectedSong.title : ""}
-                setPreviousSong={setPreviousSong}
-                setEndSong={setEndSong}
-                totalFragments={selectedSong ? selectedSong.fragments : 0}
-                volume={volume}
-                setSeek={setSeek}
-                userSeek={userSeek}
-                changePlaylist={changePlaylist}
-              />
-
-              {/* LYRICS */}
-              {selectedSong && (
+                {/* Checkbox for randomizer */}
                 <div>
-                  <h3>Letra</h3>
-                  {lyrics === null ? (
-                    <div>No hay letra disponible</div>
-                  ) : (
+                  <input
+                    type="checkbox"
+                    id="random"
+                    name="random"
+                    checked={random}
+                    onChange={() => setRandom(!random)}
+                  />
+                  <label htmlFor="random">Random</label>
+                </div>
+
+                {/* slider range for volume */}
+                <div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  />
+                </div>
+
+                {/* SONGPLAYER */}
+                <SongPlayer
+                  root={`${URL_BASE}${folder}`}
+                  artist={selectedSong ? selectedSong.artist : ""}
+                  song={selectedSong ? selectedSong.title : ""}
+                  setPreviousSong={setPreviousSong}
+                  setEndSong={setEndSong}
+                  totalFragments={selectedSong ? selectedSong.fragments : 0}
+                  volume={volume}
+                  setSeek={setSeek}
+                  userSeek={userSeek}
+                  changePlaylist={changePlaylist}
+                />
+                {/* TIME BAR */}
+                <div style={{ width: "100%", display: "flex" }}>
+                  {/* <span>0:00</span> */}
+                  <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
+                  {/* duation bar based on selectedSong.length like input range*/}
+                  <input
+                    style={{ flex: "1" }}
+                    value={seek}
+                    type="range"
+                    min="0"
+                    max={selectedSong ? selectedSong.length : 0}
+                    step="1"
+                    onChange={handleSeek}
+                  />
+                  {selectedSong ? (
                     <>
-                      <Lyrics lyrics={lyrics} timeElapsed={seek} />
+                      <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
                     </>
+                  ) : (
+                    <span>00:00</span>
                   )}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>

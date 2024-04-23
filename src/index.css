@@ -29,3 +29,13 @@
   border: 1px solid rgba(128, 128, 128, 0.3);
   box-sizing: border-box;
 }
+
+.icon {
+  color: #fff !important;
+  color: #fff;
+}
+
+.icon .icon-tabler .icon-tabler-player-play-filled {
+  fill: #fff;
+  color: #fff;
+}

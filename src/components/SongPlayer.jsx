@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Howl } from "howler";
 import PropTypes from "prop-types";
+import PLAY from "/play.svg";
+import PAUSE from "/pause.svg";
+import STOP from "/stop.svg";
+import NEXT from "/skipForward.svg";
+import PREVIOUS from "/skipBack.svg";
 
 const SongPlayer = ({
   root,
@@ -231,9 +236,18 @@ const SongPlayer = ({
 
   return (
     <div>
-      <button onClick={() => playPrevious()}>Previous</button>{" "}
-      <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>{isPlaying ? "||" : "►"}</button>{" "}
-      <button onClick={() => resetPlaying()}>■</button> <button onClick={() => setEndSong(true)}>Next</button>
+      <button onClick={() => playPrevious()}>
+        <img className="icon" src={PREVIOUS} alt="Previous" />
+      </button>
+      <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>
+        {isPlaying ? <img className="icon" src={PAUSE} alt="Pause" /> : <img className="icon" src={PLAY} alt="Play" />}
+      </button>
+      <button onClick={() => resetPlaying()}>
+        <img className="icon" src={STOP} alt="Stop" />
+      </button>
+      <button onClick={() => setEndSong(true)}>
+        <img className="icon" src={NEXT} alt="Next" />
+      </button>
     </div>
   );
 };
