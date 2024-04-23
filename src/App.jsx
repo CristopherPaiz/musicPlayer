@@ -20,6 +20,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   const [colorDark, setColorDark] = useState(null);
   const [colorText, setColorText] = useState(null);
 
+  console.log(songs);
   //initialize selectedSong null
   useEffect(() => {
     setSelectedSong(null);
@@ -196,11 +197,10 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
               <div className="grid-rows-6 flex text-center">
                 <p className="w-1/12">#</p>
                 <p className="w-1/12"></p>
-                <p className="w-1/3 text-left">Titulo</p>
-                <p className="w-1/3">Artista</p>
+                <p className="w-1/3">Titulo</p>
                 <p className="w-1/6">Album</p>
-                <p className="w-1/6">Duración</p>
                 <p className="w-1/6">Fecha</p>
+                <p className="w-1/6">Duración</p>
               </div>
               {songs.map((song) => (
                 <div
@@ -217,11 +217,13 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                       className="w-10 h-10 object-cover rounded-md mr-3"
                     />
                   </div>
-                  <p className="w-1/3 text-left font-semibold text-lg flex flex-col">{song.title}</p>
-                  <p className="w-1/3 text-lg flex flex-col">{song.artist}</p>
+                  <div className="w-1/3 text-left font-bold text-lg flex flex-col">
+                    <p>{song.title}</p>
+                    <p>{song.artist}</p>
+                  </div>
                   <p className="w-1/6">{song.album}</p>
-                  <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
                   <p className="w-1/6">{song.date.substr(0, 4)}</p>
+                  <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
                 </div>
               ))}
               {/* {image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />} */}
