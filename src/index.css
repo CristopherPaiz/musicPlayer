@@ -6,6 +6,8 @@
 :root {
   --background-color: #f3f3f3;
   --text-color: #333;
+  --colorLight: #333;
+  --textColorLigth: #f3f3f3;
 }
 
 ::-webkit-scrollbar {
@@ -18,4 +20,12 @@
 
 ::-webkit-scrollbar-track {
   background-color: #cbd5e0;
+}
+
+/* Aplica estilos hover usando la variable */
+.cursor-hover:hover {
+  background-color: var(--colorLight);
+  color: var(--textColorLigth);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  box-sizing: border-box;
 }

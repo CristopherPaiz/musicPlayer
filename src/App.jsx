@@ -18,6 +18,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   const [lyrics, setLyrics] = useState(null);
   const [color, setColor] = useState(null);
   const [colorDark, setColorDark] = useState(null);
+  const [colorLight, setColorLight] = useState(null);
   const [colorText, setColorText] = useState(null);
 
   console.log(songs);
@@ -163,12 +164,18 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
         // reduce the color to 10% to get a darker color
         const darkColor = color.value.map((c) => c * 0.8);
         setColorDark(`rgb(${darkColor.join(",")})`);
+        // reduce the color to 90% to get a lighter color
+        const lightColor = color.value.map((c) => c * 1.5);
+        setColorLight(`rgb(${lightColor.join(",")})`);
+
+        root.style.setProperty("--colorLight", colorLight);
+        root.style.setProperty("--textColorLigth", color.isDark ? "white" : "black");
         setColorText(color.isDark ? "white" : "black");
       })
       .catch((e) => {
         console.error(e);
       });
-  }, [image]);
+  }, [image, colorLight]);
 
   return (
     <div className="w-full h-screen flex max-h-screen">
@@ -329,7 +336,11 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                 <div
                   key={song.id}
                   onClick={() => setSelectedSong(song)}
-                  className="cursor-pointer flex flex-row items-center hover:bg-slate-500/50 px-2 py-2 rounded-md"
+                  style={{
+                    backgroundColor: song.id === selectedSong.id ? "#a8a8a8" : "",
+                    color: song.id === selectedSong.id ? "#000" : "",
+                  }}
+                  className="cursor-pointer cursor-hover flex flex-row items-center px-2 py-2 rounded-md"
                 >
                   <div>
                     <img
