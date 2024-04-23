@@ -161,7 +161,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
         root.style.setProperty("color", color.isDark ? "white" : "black");
         setColor(color.hex);
         // reduce the color to 10% to get a darker color
-        const darkColor = color.value.map((c) => c * 1.5);
+        const darkColor = color.value.map((c) => c * 0.8);
         setColorDark(`rgb(${darkColor.join(",")})`);
         setColorText(color.isDark ? "white" : "black");
       })
