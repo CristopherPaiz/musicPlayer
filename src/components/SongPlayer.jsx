@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Howl } from "howler";
 import PropTypes from "prop-types";
-import PLAY from "/play.svg";
-import PAUSE from "/pause.svg";
-import STOP from "/stop.svg";
-import NEXT from "/skipForward.svg";
-import PREVIOUS from "/skipBack.svg";
+import SkipBack from "./icons/SkipBack";
+import Pause from "./icons/Pause";
+import Play from "./icons/Play";
+import Stop from "./icons/Stop";
+import SkipForward from "./icons/SkipForward";
 
 const SongPlayer = ({
+  colorText,
   root,
   artist,
   song,
@@ -117,15 +118,15 @@ const SongPlayer = ({
     sound.current.pause();
   };
 
-  const resetPlaying = () => {
-    setIsPlaying(false);
-    setSeek(0);
-    numberOfFragments.current = 1;
-    if (sound.current) {
-      sound.current.stop();
-      sound.current = null;
-    }
-  };
+  // const resetPlaying = () => {
+  //   setIsPlaying(false);
+  //   setSeek(0);
+  //   numberOfFragments.current = 1;
+  //   if (sound.current) {
+  //     sound.current.stop();
+  //     sound.current = null;
+  //   }
+  // };
 
   useEffect(() => {
     if (sound.current) {
@@ -235,19 +236,31 @@ const SongPlayer = ({
   }, [changePlaylist, song]);
 
   return (
-    <div>
-      <button onClick={() => playPrevious()}>
-        <img className="icon" src={PREVIOUS} alt="Previous" />
-      </button>
-      <button onClick={() => (isPlaying ? pausePlaying() : startPlaying())}>
-        {isPlaying ? <img className="icon" src={PAUSE} alt="Pause" /> : <img className="icon" src={PLAY} alt="Play" />}
-      </button>
-      <button onClick={() => resetPlaying()}>
-        <img className="icon" src={STOP} alt="Stop" />
-      </button>
-      <button onClick={() => setEndSong(true)}>
-        <img className="icon" src={NEXT} alt="Next" />
-      </button>
+    <div className="relative flex flex-row justify-center ">
+      <div className="flex gap-8">
+        <button
+          onClick={() => playPrevious()}
+          style={{ border: `4px solid transparent` }}
+          className=" rounded-full p-2 hover:scale-105"
+        >
+          <SkipBack color={colorText} />
+        </button>
+        <button
+          onClick={() => (isPlaying ? pausePlaying() : startPlaying())}
+          style={{ border: `4px solid ${colorText}` }}
+          className="border-4 rounded-full p-2 hover:scale-105"
+        >
+          {isPlaying ? <Pause color={colorText} /> : <Play color={colorText} />}
+        </button>
+
+        <button
+          onClick={() => setEndSong(true)}
+          style={{ border: `4px solid transparent` }}
+          className="border-4 rounded-full p-2 hover:scale-105"
+        >
+          <SkipForward color={colorText} />
+        </button>
+      </div>
     </div>
   );
 };
@@ -255,6 +268,7 @@ const SongPlayer = ({
 export default SongPlayer;
 
 SongPlayer.propTypes = {
+  colorText: PropTypes.string,
   root: PropTypes.string.isRequired,
   artist: PropTypes.string.isRequired,
   song: PropTypes.string.isRequired,

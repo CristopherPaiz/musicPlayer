@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import App from "./App";
 import "./index.css";
-import PLAYLIST from "/playlist.svg";
+import Playlist from "./components/icons/Playlist";
 
 const Home = () => {
   const [playlistSelected, setPlaylistSelected] = useState(false);
@@ -51,19 +51,22 @@ const Home = () => {
       {/* Main */}
       <div className="flex flex-row w-full h-screen overflow-hidden hover:cursor-default">
         {/* LEFT */}
-        <div className="sm:w-[15%] py-5 bg-slate-700 text-black pr-3">
+        <div className="sm:w-[15%] py-5 bg-gray-700/50 text-black pr-3">
           <div className="flex w-full justify-center items-center">
             <img
-              className="w-32 h-w-32 object-cover mb-5"
-              src="https://cdn-icons-png.flaticon.com/512/4812/4812505.png"
+              className="w-32 h-w-32 object-cover mb-5 invert"
+              // src="https://cdn-icons-png.flaticon.com/512/4812/4812505.png"
+              src="https://cdn-icons-png.flaticon.com/512/14793/14793826.png"
               alt="Logo music player"
             />
           </div>
           {/* TITLE PLAYLIST */}
-          <article className="w-full py-3 pl-5 rounded-r-3xl bg-slate-400 flex gap-x-2 mb-5">
+          <article className="w-full py-3 pl-5 rounded-r-3xl bg-gray-800/40 flex gap-x-2 mb-5">
             {/* render svg playlist */}
-            <img src={PLAYLIST} alt="Playlist" className="w-7 h-7" />
-            <h2 className="font-bold text-xl">Playlists</h2>
+            <div className="size-8 object-cover">
+              <Playlist color={"#fff"} />
+            </div>
+            <h2 className="font-bold text-xl text-white">Playlists</h2>
           </article>
 
           <div className="h-full flex flex-col">

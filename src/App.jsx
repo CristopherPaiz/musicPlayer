@@ -3,6 +3,8 @@ import SongPlayer from "./components/SongPlayer";
 import { FastAverageColor } from "fast-average-color";
 import PropTypes from "prop-types";
 import Lyrics from "./components/Lyrics";
+import Random from "./components/icons/Random";
+import NoRandom from "./components/icons/NoRandom";
 
 const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChangePlaylist }) => {
   const [songs, setSongs] = useState(playlist);
@@ -19,6 +21,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   const [color, setColor] = useState(null);
   const [colorDark, setColorDark] = useState(null);
   const [colorLight, setColorLight] = useState(null);
+  const [colorTextLight, setColorTextLight] = useState(null);
   const [colorText, setColorText] = useState(null);
 
   console.log(songs);
@@ -168,6 +171,9 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
         const lightColor = color.value.map((c) => c * 1.5);
         setColorLight(`rgb(${lightColor.join(",")})`);
 
+        const textLigthColor = color.value.map((c) => c * 2);
+        setColorTextLight(`rgb(${textLigthColor.join(",")})`);
+
         root.style.setProperty("--colorLight", colorLight);
         root.style.setProperty("--textColorLigth", color.isDark ? "white" : "black");
         setColorText(color.isDark ? "white" : "black");
@@ -197,7 +203,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
         </article>
 
         {/* CENTER */}
-        <div className="w-full flex flex-row mb-5 overflow-y-auto">
+        <div className="w-full flex flex-row overflow-y-auto">
           {/* PLAYLIST PRINCIPAL */}
           {!selectedSong ? (
             <div className="w-full flex flex-col h-full p-5">
@@ -237,64 +243,42 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
           ) : (
             // PLAYING SONG
             <div className="flex flex-col w-full flex-1 p-5">
-              <div className="flex flex-row p-5 gap-8 w-full">
-                <div>{image && <img src={image} style={{ width: "400px", height: "400px" }} alt="cover" />}</div>
+              <div className="flex flex-row p-5 gap-14 w-11/12 m-auto">
+                <div>
+                  {image && (
+                    <img
+                      src={image}
+                      style={{ width: "400px", height: "400px", minWidth: "400px" }}
+                      className="drop-shadow-2xl border-2 border-black/10"
+                      alt="cover"
+                    />
+                  )}
+                </div>
                 <div className="overflow-x-hidden">
                   {/* TITLE */}
                   <h2 className="text-4xl font-bold text-nowrap text-ellipsis overflow-hidden">{selectedSong.title}</h2>
                   <h2 className="text-2xl text-nowrap text-ellipsis overflow-hidden">{selectedSong.artist}</h2>
                   {/* LYRICS */}
-                  <div>
+                  <>
                     {lyrics === null ? (
                       <div>No hay letra disponible</div>
                     ) : (
                       <>
-                        <Lyrics lyrics={lyrics} timeElapsed={seek} />
+                        <Lyrics
+                          lyrics={lyrics}
+                          timeElapsed={seek}
+                          color={colorTextLight}
+                          darkColor={colorDark}
+                          backgroundColor={colorText === "black" ? "#00000099" : "#ffffff99"}
+                        />
                       </>
                     )}
-                  </div>
+                  </>
                 </div>
               </div>
-              <div>
-                {/* Checkbox for randomizer */}
-                <div>
-                  <input
-                    type="checkbox"
-                    id="random"
-                    name="random"
-                    checked={random}
-                    onChange={() => setRandom(!random)}
-                  />
-                  <label htmlFor="random">Random</label>
-                </div>
-
-                {/* slider range for volume */}
-                <div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={volume}
-                    onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  />
-                </div>
-
-                {/* SONGPLAYER */}
-                <SongPlayer
-                  root={`${URL_BASE}${folder}`}
-                  artist={selectedSong ? selectedSong.artist : ""}
-                  song={selectedSong ? selectedSong.title : ""}
-                  setPreviousSong={setPreviousSong}
-                  setEndSong={setEndSong}
-                  totalFragments={selectedSong ? selectedSong.fragments : 0}
-                  volume={volume}
-                  setSeek={setSeek}
-                  userSeek={userSeek}
-                  changePlaylist={changePlaylist}
-                />
+              <div className="relative w-10/12 justify-center m-auto">
                 {/* TIME BAR */}
-                <div style={{ width: "100%", display: "flex" }}>
+                <div style={{ width: "100%", display: "flex", gap: "15px" }}>
                   {/* <span>0:00</span> */}
                   <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
                   {/* duation bar based on selectedSong.length like input range*/}
@@ -315,6 +299,46 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                     <span>00:00</span>
                   )}
                 </div>
+                {/* SONGPLAYER */}
+                <SongPlayer
+                  colorText={colorText}
+                  root={`${URL_BASE}${folder}`}
+                  artist={selectedSong ? selectedSong.artist : ""}
+                  song={selectedSong ? selectedSong.title : ""}
+                  setPreviousSong={setPreviousSong}
+                  setEndSong={setEndSong}
+                  totalFragments={selectedSong ? selectedSong.fragments : 0}
+                  volume={volume}
+                  setSeek={setSeek}
+                  userSeek={userSeek}
+                  changePlaylist={changePlaylist}
+                />
+                <div className="flex flex-row ">
+                  <div className="absolute left-0 top-0 mt-7 flex flex-row gap-4">
+                    {/* Checkbox for randomizer */}
+                    <button
+                      onClick={() => setRandom(!random)}
+                      style={{ border: `4px solid transparent` }}
+                      className="rounded-full p-2 hover:scale-105"
+                    >
+                      {random ? <Random color={colorText} /> : <NoRandom color={colorText} />}
+                    </button>
+                  </div>
+                  <div className="absolute right-0 top-0 mt-10 flex flex-row gap-4">
+                    {/* slider range for volume */}
+                    <div>
+                      {(volume * 100).toFixed(0)}% &nbsp;&nbsp;
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={volume}
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -322,7 +346,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
       </div>
       {/* RIGHT */}
       {selectedSong && (
-        <div className="w-[280px] overflow-y-auto bg-black/10">
+        <div className="w-[350px] overflow-y-auto bg-black/10">
           <div
             style={{
               backgroundColor: color,

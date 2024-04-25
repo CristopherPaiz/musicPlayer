@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
-const Lyrics = ({ lyrics, timeElapsed }) => {
+const Lyrics = ({ lyrics, timeElapsed, color, darkColor, backgroundColor }) => {
   const [currentLines, setCurrentLines] = useState(Array(10).fill(""));
 
   useEffect(() => {
@@ -38,14 +38,30 @@ const Lyrics = ({ lyrics, timeElapsed }) => {
         justifyContent: "center",
         alignItems: "center",
         gap: "10px",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: backgroundColor,
         overflow: "hidden",
         padding: "20px 10px 10px 10px",
         textWrap: "wrap",
       }}
     >
       {currentLines.map((line, index) => (
-        <p key={index} style={{ color: index === 5 ? "red" : "white", padding: "0", lineHeigh: "1", margin: "5px" }}>
+        <p
+          key={index}
+          style={{
+            color: index === 5 ? color : darkColor,
+            lineHeigh: "1",
+            fontWeight: index === 5 ? "bold" : "normal",
+            margin: "5px",
+            textAlign: "center",
+            opacity: index === 5 ? "1" : "0.5",
+            background:
+              index === 5
+                ? "linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(128,128,128,0.4) 50%, rgba(0,0,0,0) 100%)"
+                : "rgba(255,255,255,0)",
+            padding: index === 5 ? "15px" : "0px",
+            width: "100%",
+          }}
+        >
           {line}
         </p>
       ))}
@@ -56,6 +72,9 @@ const Lyrics = ({ lyrics, timeElapsed }) => {
 Lyrics.propTypes = {
   lyrics: PropTypes.string.isRequired,
   timeElapsed: PropTypes.number.isRequired,
+  color: PropTypes.string,
+  darkColor: PropTypes.string,
+  backgroundColor: PropTypes.string,
 };
 
 export default Lyrics;

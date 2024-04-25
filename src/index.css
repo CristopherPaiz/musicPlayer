@@ -30,12 +30,7 @@
   box-sizing: border-box;
 }
 
-.icon {
-  color: #fff !important;
-  color: #fff;
-}
-
-.icon .icon-tabler .icon-tabler-player-play-filled {
-  fill: #fff;
-  color: #fff;
+input[type="range"] {
+  accent-color: var(--colorLight);
+  filter: brightness(0.9);
 }
