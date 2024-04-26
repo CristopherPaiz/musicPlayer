@@ -182,13 +182,13 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
       });
   }, [image, colorLight]);
 
-  function recortarTexto(texto, limite) {
-    if (texto.length <= limite) {
-      return texto;
-    } else {
-      return texto.slice(0, limite) + "...";
-    }
-  }
+  // function recortarTexto(texto, limite) {
+  //   if (texto.length <= limite) {
+  //     return texto;
+  //   } else {
+  //     return texto.slice(0, limite) + "...";
+  //   }
+  // }
 
   return (
     <div className="w-full h-screen flex max-h-screen">
@@ -254,7 +254,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
             </>
           ) : (
             // PLAYING SONG
-            <div className="flex flex-col p-5 m-auto">
+            <div className="flex flex-col w-full p-5 m-auto max-w-[1200px]">
               <div className="flex flex-row px-5 gap-14 w-11/12 m-auto">
                 <div>
                   {image && (
