@@ -210,7 +210,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
         </article>
 
         {/* CENTER */}
-        <div className="w-full flex flex-col overflow-y-auto">
+        <div className="w-full h-full flex flex-col overflow-y-auto">
           {/* PLAYLIST PRINCIPAL */}
           {!selectedSong ? (
             <>
@@ -254,9 +254,9 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
             </>
           ) : (
             // PLAYING SONG
-            <div className="flex flex-col w-full p-5 m-auto max-w-[1200px]">
-              <div className="flex flex-row px-5 gap-14 w-11/12 m-auto">
-                <div>
+            <div className="flex flex-col w-full p-5 m-auto max-w-[1200px] items-center justify-center">
+              <div className="flex flex-row px-5 gap-14 w-11/12  m-auto">
+                <div className="flex flex-col flex-1">
                   {image && (
                     <img
                       src={image}
