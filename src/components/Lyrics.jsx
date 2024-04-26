@@ -31,8 +31,6 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor, backgroundColor }) => {
   return (
     <div
       style={{
-        width: "400px",
-        height: "325px",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -43,6 +41,7 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor, backgroundColor }) => {
         padding: "20px 10px 10px 10px",
         textWrap: "wrap",
       }}
+      className="w-[380px] max-h-[230px]"
     >
       {currentLines.map((line, index) => (
         <p

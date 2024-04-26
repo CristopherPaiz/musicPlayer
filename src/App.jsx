@@ -24,7 +24,6 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   const [colorTextLight, setColorTextLight] = useState(null);
   const [colorText, setColorText] = useState(null);
 
-  console.log(songs);
   //initialize selectedSong null
   useEffect(() => {
     setSelectedSong(null);
@@ -158,7 +157,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
     fac.destroy();
     setColor(null);
     fac
-      .getColorAsync(image, { algorithm: "dominant", mode: "speed" })
+      .getColorAsync(image, { algorithm: "dominant", mode: "precision" })
       .then((color) => {
         const root = document.documentElement;
         root.style.setProperty("background-color", color.hex);
@@ -183,6 +182,14 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
       });
   }, [image, colorLight]);
 
+  function recortarTexto(texto, limite) {
+    if (texto.length <= limite) {
+      return texto;
+    } else {
+      return texto.slice(0, limite) + "...";
+    }
+  }
+
   return (
     <div className="w-full h-screen flex max-h-screen">
       <div className="flex flex-col w-full">
@@ -203,11 +210,14 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
         </article>
 
         {/* CENTER */}
-        <div className="w-full flex flex-row overflow-y-auto">
+        <div className="w-full flex flex-col overflow-y-auto">
           {/* PLAYLIST PRINCIPAL */}
           {!selectedSong ? (
-            <div className="w-full flex flex-col h-full p-5">
-              <div className="grid-rows-6 flex text-center">
+            <>
+              <div
+                className="p-5 grid-rows-6 flex text-center sticky top-0 backdrop-blur-md bg-black/50 text-white"
+                style={{ color: colorText }}
+              >
                 <p className="w-1/12">#</p>
                 <p className="w-1/12"></p>
                 <p className="w-1/3">Titulo</p>
@@ -215,53 +225,55 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                 <p className="w-1/6">Fecha</p>
                 <p className="w-1/6">Duración</p>
               </div>
-              {songs.map((song) => (
-                <div
-                  key={song.id}
-                  onClick={() => setSelectedSong(song)}
-                  className="text-center cursor-pointer py-3 bg-black/10 border-white/30 border-2 grid-rows-6 rounded-md my-1 flex items-center"
-                >
-                  <p className="w-1/12">{song.id}</p>
-                  <div className="w-1/12">
-                    <img
-                      src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
-                      alt="cover"
-                      loading="lazy"
-                      className="w-10 h-10 object-cover rounded-md mr-3"
-                    />
+              <div className="w-full flex flex-col h-full px-5 ">
+                {songs.map((song) => (
+                  <div
+                    key={song.id}
+                    onClick={() => setSelectedSong(song)}
+                    className="text-center cursor-pointer py-2 bg-black/10 border-white/30 border-2 grid-rows-6 rounded-md my-1 flex items-center"
+                  >
+                    <p className="w-1/12">{song.id}</p>
+                    <div className="w-1/12">
+                      <img
+                        src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
+                        alt="cover"
+                        loading="lazy"
+                        className="size-12 object-cover rounded-md mr-3 border-[1px] border-black/30 bg-gray-500/30"
+                      />
+                    </div>
+                    <div className="w-1/3 text-left text-lg flex flex-col">
+                      <p className="font-bold ">{song.title}</p>
+                      <p>{song.artist}</p>
+                    </div>
+                    <p className="w-1/6">{song.album}</p>
+                    <p className="w-1/6">{song.date.substr(0, 4)}</p>
+                    <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
                   </div>
-                  <div className="w-1/3 text-left font-bold text-lg flex flex-col">
-                    <p>{song.title}</p>
-                    <p>{song.artist}</p>
-                  </div>
-                  <p className="w-1/6">{song.album}</p>
-                  <p className="w-1/6">{song.date.substr(0, 4)}</p>
-                  <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           ) : (
             // PLAYING SONG
-            <div className="flex flex-col w-full flex-1 p-5">
-              <div className="flex flex-row p-5 gap-14 w-11/12 m-auto">
+            <div className="flex flex-col p-5 m-auto">
+              <div className="flex flex-row px-5 gap-14 w-11/12 m-auto">
                 <div>
                   {image && (
                     <img
                       src={image}
-                      style={{ width: "400px", height: "400px", minWidth: "400px" }}
-                      className="drop-shadow-2xl border-2 border-black/10"
+                      className="mb-5 w-[300px] min-w-[200px] max-w-[600px] h-auto aspect-square drop-shadow-2xl border-[3px] border-gray-500/30"
                       alt="cover"
+                      loading="lazy"
                     />
                   )}
                 </div>
-                <div className="overflow-x-hidden">
+                <div className="w-full">
                   {/* TITLE */}
-                  <h2 className="text-4xl font-bold text-nowrap text-ellipsis overflow-hidden">{selectedSong.title}</h2>
-                  <h2 className="text-2xl text-nowrap text-ellipsis overflow-hidden">{selectedSong.artist}</h2>
+                  <h2 className="text-3xl font-bold text-ellipsis overflow-hidden">{selectedSong.title}</h2>
+                  <h2 className="text-xl text-nowrap text-ellipsis overflow-hidden">{selectedSong.artist}</h2>
                   {/* LYRICS */}
                   <>
                     {lyrics === null ? (
-                      <div>No hay letra disponible</div>
+                      <div className="flex flex-col justify-center w-full h-1/2">No hay letra disponible</div>
                     ) : (
                       <>
                         <Lyrics
@@ -278,7 +290,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
               </div>
               <div className="relative w-10/12 justify-center m-auto">
                 {/* TIME BAR */}
-                <div style={{ width: "100%", display: "flex", gap: "15px" }}>
+                <div style={{ width: "100%", display: "flex", gap: "15px" }} className="mb-2">
                   {/* <span>0:00</span> */}
                   <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
                   {/* duation bar based on selectedSong.length like input range*/}
@@ -346,7 +358,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
       </div>
       {/* RIGHT */}
       {selectedSong && (
-        <div className="w-[350px] overflow-y-auto bg-black/10">
+        <div className="w-[350px] min-w-[150px] overflow-y-auto bg-black/10">
           <div
             style={{
               backgroundColor: color,
