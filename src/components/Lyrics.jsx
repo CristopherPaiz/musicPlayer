@@ -38,6 +38,7 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor, backgroundColor }) => {
         gap: "10px",
         backgroundColor: backgroundColor,
         overflow: "hidden",
+        overflowX: "hidden",
         padding: "20px 10px 10px 10px",
         textWrap: "wrap",
       }}

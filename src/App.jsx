@@ -368,11 +368,12 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
           >
             <h3 className="pt-2 pb-3">En cola</h3>
           </div>
-          <div className="pl-3 pr-2 pb-5">
+          <ul className="pl-3 pr-2 pb-5">
             {songs.map((song) => (
-              <div key={song.id}>
+              <li key={song.id}>
                 <div
                   key={song.id}
+                  data-label={song}
                   onClick={() => setSelectedSong(song)}
                   style={{
                     backgroundColor: song.id === selectedSong.id ? "#a8a8a8" : "",
@@ -393,9 +394,9 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                     <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[12px]">{song.artist}</p>
                   </div>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
     </div>

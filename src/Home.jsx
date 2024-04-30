@@ -52,7 +52,7 @@ const Home = () => {
       {/* Main */}
       <div className="flex flex-row w-full h-screen overflow-hidden hover:cursor-default">
         {/* LEFT */}
-        <div className="sm:w-[230px] py-5 bg-black/50 text-black ">
+        <div className="sm:w-[230px] py-5 bg-black/50 text-black overflow-y-auto">
           <div className="flex w-full justify-center items-center">
             <img
               className="w-32 h-w-32 object-cover mb-3 invert"
@@ -71,9 +71,9 @@ const Home = () => {
             <h2 className="font-bold text-lg text-white">Playlists</h2>
           </article>
 
-          <div className="h-full flex flex-col">
+          <div className="flex flex-col">
             {/* PLAYLISTS */}
-            <div className="text-sm w-full overflow-y-auto items-center flex flex-col text-white pl-1 pr-2 gap-y-1">
+            <div className="text-sm w-full items-center flex flex-col text-white pl-1 pr-2 gap-y-1">
               {playlists.map((plays) => (
                 <div
                   key={plays.id}
