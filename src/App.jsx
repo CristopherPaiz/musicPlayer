@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import Lyrics from "./components/Lyrics";
 import Random from "./components/icons/Random";
 import NoRandom from "./components/icons/NoRandom";
+import Drawer from "react-modern-drawer";
 
 const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChangePlaylist }) => {
   const [songs, setSongs] = useState(playlist);
@@ -190,6 +191,12 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
   //   }
   // }
 
+  //DRAWER
+  const [openQueue, setOpenQueue] = useState(false);
+  const toggleQueue = () => {
+    setOpenQueue((prevState) => !prevState);
+  };
+
   return (
     <div className="w-full h-screen flex max-h-screen">
       <div className="flex flex-col w-full">
@@ -199,13 +206,15 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
             background: `linear-gradient(90deg, ${colorDark} 0%, ${color} 100%)`,
             color: colorText,
           }}
-          className="flex p-4 gap-x-4 items-center"
+          className="flex p-4 gap-x-4 items-center w-full max-w-full"
         >
-          <img src={playlistData.cover} alt={playlistData.name} className="w-32 h-32 rounded-2xl" />
-          <div className="flex flex-col w-full max-h-w-32 gap-y-1">
-            <h1 className="font-bold uppercase text-4xl">{playlistData.name}</h1>
-            <h2 className="text-2xl">{playlistData.artist}</h2>
-            <p className="text-xl font-thin">{playlistData.description}</p>
+          <img src={playlistData.cover} alt={playlistData.name} className="size-20 sm:size-32 rounded-2xl" />
+          <div className="flex flex-col w-full max-h-w-32 gap-y-1 sm:text-wrap text-nowrap overflow-hidden text-ellipsis">
+            <h1 className="font-bold uppercase sm:text-4xl text-xl sm:text-wrap text-nowrap overflow-hidden text-ellipsis">
+              {playlistData.name}
+            </h1>
+            <h2 className="sm:text-2xl text-lg text-wrap">{playlistData.artist}</h2>
+            <p className="text-sm sm:text-xl font-thin">{playlistData.description}</p>
           </div>
         </article>
 
@@ -215,7 +224,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
           {!selectedSong ? (
             <>
               <div
-                className="p-5 grid-rows-6 flex text-center sticky top-0 backdrop-blur-md bg-black/50 text-white"
+                className="hidden p-5 grid-rows-6 sm:flex text-center sticky top-0 backdrop-blur-md bg-black/50 text-white"
                 style={{ color: colorText }}
               >
                 <p className="w-1/12">#</p>
@@ -225,7 +234,8 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                 <p className="w-1/6">Fecha</p>
                 <p className="w-1/6">Duración</p>
               </div>
-              <div className="w-full flex flex-col h-full px-5 ">
+              {/* SONGS */}
+              <div className="hidden w-full sm:flex flex-col h-full px-5 ">
                 {songs.map((song) => (
                   <div
                     key={song.id}
@@ -251,29 +261,69 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                   </div>
                 ))}
               </div>
+              {/* SONGS MOBILE*/}
+              <div className="sm:hidden w-full flex flex-col h-full pl-5 pr-3">
+                {songs.map((song) => (
+                  <div
+                    key={song.id}
+                    onClick={() => setSelectedSong(song)}
+                    className="text-center cursor-pointer px-3 py-3 bg-black/10 border-white/30 border-2 grid-rows-3 rounded-md my-1 flex items-center w-full"
+                  >
+                    <div className="w-1/6 mr-3">
+                      <img
+                        src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
+                        alt="cover"
+                        loading="lazy"
+                        className="size-12 object-cover rounded-md mr-3 border-[1px] border-black/30 bg-gray-500/30"
+                      />
+                    </div>
+                    <div className="w-full text-left text-lg flex flex-col">
+                      <p className="font-bold ">{song.title}</p>
+                      <p>{song.artist}</p>
+                    </div>
+                    <p className="w-1/6">{new Date(song.length * 1000).toISOString().substr(14, 5)}</p>
+                  </div>
+                ))}
+              </div>
             </>
           ) : (
             // PLAYING SONG
-            <div className="flex flex-col w-full p-5 m-auto max-w-[1200px] items-center justify-center">
-              <div className="flex flex-row px-5 gap-14 w-11/12  m-auto">
+            <div className="flex flex-col w-full p-5 pt-[100px] sm:pt-0 sm:m-auto max-w-[1200px] items-center justify-center">
+              <div className="flex flex-row px-5 gap-14 w-11/12 m-auto">
                 <div className="flex flex-col flex-1">
+                  <div className="sm:hidden flex flex-col">
+                    <h2 className="text-3xl font-bold text-ellipsis overflow-hidden">{selectedSong.title}</h2>
+                    <h2 className="text-xl text-nowrap text-ellipsis overflow-hidden">{selectedSong.artist}</h2>
+                    {image && (
+                      <img
+                        src={image}
+                        className="mb-5 w-[300px] min-w-[200px] max-w-[600px] h-auto aspect-square drop-shadow-2xl border-[3px] border-gray-500/30"
+                        alt="cover"
+                        loading="lazy"
+                      />
+                    )}
+                  </div>
                   {image && (
                     <img
                       src={image}
-                      className="mb-5 w-[300px] min-w-[200px] max-w-[600px] h-auto aspect-square drop-shadow-2xl border-[3px] border-gray-500/30"
+                      className="hidden sm:block mb-5 w-[300px] min-w-[200px] max-w-[600px] h-auto aspect-square drop-shadow-2xl border-[3px] border-gray-500/30"
                       alt="cover"
                       loading="lazy"
                     />
                   )}
                 </div>
-                <div className="w-full">
+                <div>
                   {/* TITLE */}
-                  <h2 className="text-3xl font-bold text-ellipsis overflow-hidden">{selectedSong.title}</h2>
-                  <h2 className="text-xl text-nowrap text-ellipsis overflow-hidden">{selectedSong.artist}</h2>
+                  <h2 className="hidden sm:flex text-3xl font-bold text-ellipsis overflow-hidden">
+                    {selectedSong.title}
+                  </h2>
+                  <h2 className="hidden sm:flex text-xl text-nowrap text-ellipsis overflow-hidden">
+                    {selectedSong.artist}
+                  </h2>
                   {/* LYRICS */}
-                  <>
+                  <div className="hidden sm:flex">
                     {lyrics === null ? (
-                      <div className="flex flex-col justify-center w-full h-1/2">No hay letra disponible</div>
+                      <div className="hidden sm:flex flex-col justify-center w-full h-1/2">No hay letra disponible</div>
                     ) : (
                       <>
                         <Lyrics
@@ -285,7 +335,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                         />
                       </>
                     )}
-                  </>
+                  </div>
                 </div>
               </div>
               <div className="relative w-10/12 justify-center m-auto">
@@ -336,7 +386,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
                       {random ? <Random color={colorText} /> : <NoRandom color={colorText} />}
                     </button>
                   </div>
-                  <div className="absolute right-0 top-0 mt-10 flex flex-row gap-4">
+                  <div className="hidden sm:absolute sm:right-0 top-0 mt-10 sm:flex flex-row gap-4">
                     {/* slider range for volume */}
                     <div>
                       {(volume * 100).toFixed(0)}% &nbsp;&nbsp;
@@ -356,47 +406,113 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
           )}
         </div>
       </div>
+
       {/* RIGHT */}
       {selectedSong && (
-        <div className="w-[350px] min-w-[150px] overflow-y-auto bg-black/10">
-          <div
-            style={{
-              backgroundColor: color,
-              filter: "brightness(0.90)",
-            }}
-            className={`text-2xl font-bold text-center py-2 sticky top-0`}
+        <div className="w-0 sm:w-[350px] sm:min-w-[150px] overflow-y-auto bg-black/10">
+          <button
+            className="sm:hidden bg-slate-400/90 p-3 w-40 rounded-md h-20 absolute bottom-0 right-0 text-center"
+            onClick={toggleQueue}
           >
-            <h3 className="pt-2 pb-3">En cola</h3>
+            QUEUE
+          </button>
+          {/* DESKTOP */}
+          <div className="hidden sm:block">
+            <div
+              style={{
+                backgroundColor: color,
+                filter: "brightness(0.90)",
+              }}
+              className={`text-2xl font-bold text-center py-2 sticky top-0`}
+            >
+              <h3 className="pt-2 pb-3">En cola</h3>
+            </div>
+            <ul className="pl-3 pr-2 pb-5">
+              {songs.map((song) => (
+                <li key={song.id}>
+                  <div
+                    key={song.id}
+                    data-label={song}
+                    onClick={() => setSelectedSong(song)}
+                    style={{
+                      backgroundColor: song.id === selectedSong.id ? "#a8a8a8" : "",
+                      color: song.id === selectedSong.id ? "#000" : "",
+                    }}
+                    className="cursor-pointer cursor-hover flex flex-row items-center px-2 py-2 rounded-md"
+                  >
+                    <div>
+                      <img
+                        src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
+                        alt="cover"
+                        loading="lazy"
+                        className="size-[35px] min-w-[35px] object-cover rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col overflow-hidden">
+                      <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[15px]">{song.title}</p>
+                      <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[12px]">{song.artist}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="pl-3 pr-2 pb-5">
-            {songs.map((song) => (
-              <li key={song.id}>
-                <div
-                  key={song.id}
-                  data-label={song}
-                  onClick={() => setSelectedSong(song)}
-                  style={{
-                    backgroundColor: song.id === selectedSong.id ? "#a8a8a8" : "",
-                    color: song.id === selectedSong.id ? "#000" : "",
-                  }}
-                  className="cursor-pointer cursor-hover flex flex-row items-center px-2 py-2 rounded-md"
-                >
-                  <div>
-                    <img
-                      src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
-                      alt="cover"
-                      loading="lazy"
-                      className="size-[35px] min-w-[35px] object-cover rounded-md"
-                    />
-                  </div>
-                  <div className="flex flex-col overflow-hidden">
-                    <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[15px]">{song.title}</p>
-                    <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[12px]">{song.artist}</p>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+
+          {/* MOBILE */}
+          <Drawer
+            open={openQueue}
+            onClose={toggleQueue}
+            direction="bottom"
+            className="overflow-y-auto"
+            size={"80vh"}
+            enableOverlay
+            style={{ backgroundColor: color }}
+          >
+            <div className="">
+              <div
+                style={{
+                  backgroundColor: color,
+                  filter: "brightness(0.90)",
+                }}
+                className={`text-2xl font-bold -mt-1 text-center py-2 sticky top-0`}
+              >
+                <h3 className="pt-2 pb-3">En cola</h3>
+              </div>
+              <ul className="pl-3 pr-2 pb-5">
+                {songs.map((song) => (
+                  <li key={song.id}>
+                    <div
+                      key={song.id}
+                      data-label={song}
+                      onClick={() => {
+                        setSelectedSong(song), toggleQueue();
+                      }}
+                      style={{
+                        backgroundColor: song.id === selectedSong.id ? "#a8a8a8" : "",
+                        color: song.id === selectedSong.id ? "#000" : "",
+                      }}
+                      className="cursor-pointer cursor-hover flex flex-row items-center px-2 py-2 rounded-md"
+                    >
+                      <div>
+                        <img
+                          src={URL_BASE + folder + "/" + song.artist + "/" + song.title + "/" + "cover.webp"}
+                          alt="cover"
+                          loading="lazy"
+                          className="size-[35px] min-w-[35px] object-cover rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col overflow-hidden">
+                        <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[15px]">{song.title}</p>
+                        <p className="ml-2 text-ellipsis overflow-hidden whitespace-nowrap text-[12px]">
+                          {song.artist}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Drawer>
         </div>
       )}
     </div>
