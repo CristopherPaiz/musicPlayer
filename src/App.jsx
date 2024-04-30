@@ -288,7 +288,7 @@ const App = ({ URL_BASE, playlist, folder, playlistData, changePlaylist, setChan
             </>
           ) : (
             // PLAYING SONG
-            <div className="flex flex-col w-full p-5 pt-[100px] sm:pt-0 sm:m-auto max-w-[1200px] items-center justify-center">
+            <div className="flex flex-col w-full p-5 pt-[50px] sm:pt-0 sm:m-auto max-w-[1200px] items-center justify-center">
               <div className="flex flex-row px-5 gap-14 w-11/12 m-auto">
                 <div className="flex flex-col flex-1">
                   <div className="sm:hidden flex flex-col">
