@@ -22,11 +22,7 @@ const Bienvenida = () => {
       </div>
       <h4 className="mb-2">
         Esta aplicación fue hecha por
-        <a
-          href="https://www.github.com/CristopherPaiz/musicPlayer"
-          target="_blank"
-          className="mx-1 hover:underline text-blue-700"
-        >
+        <a href="https://www.github.com/CristopherPaiz" target="_blank" className="mx-1 hover:underline text-blue-700">
           Cristopher Paiz
         </a>
       </h4>
