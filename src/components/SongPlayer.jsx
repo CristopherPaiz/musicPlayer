@@ -1,263 +1,223 @@
-import { useEffect, useRef, useState } from "react";
-import { Howl } from "howler";
+import { useEffect, useRef, useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import SkipBack from "./icons/SkipBack";
 import Pause from "./icons/Pause";
 import Play from "./icons/Play";
-import Stop from "./icons/Stop";
 import SkipForward from "./icons/SkipForward";
 
-const SongPlayer = ({
-  colorText,
-  root,
-  artist,
-  song,
-  setPreviousSong,
-  setEndSong,
-  totalFragments,
-  volume,
-  setSeek,
-  userSeek,
-  changePlaylist,
-}) => {
-  const sound = useRef(null);
-  const numberOfFragments = useRef(1);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [seekPlayer, setSeekPlayer] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
+const FRAGMENT_DURATION = 10;
 
-  useEffect(() => {
-    let attemptCount = 0; // Initialize attempt counter
+class AudioPlayer {
+  constructor({ songUrl, totalFragments, onStateChange, onSeekUpdate, onSongEnd }) {
+    this.songUrl = songUrl;
+    this.totalFragments = totalFragments;
+    this.onStateChange = onStateChange;
+    this.onSeekUpdate = onSeekUpdate;
+    this.onSongEnd = onSongEnd;
 
-    const preloadNext = () => {
-      if (attemptCount >= 2) {
-        clearInterval(preloadTimer);
-        return;
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    this.gainNode = this.audioContext.createGain();
+    this.gainNode.connect(this.audioContext.destination);
+
+    this.bufferCache = new Map();
+    this.sourceNode = null;
+    this.currentFragmentIndex = 1;
+    this.playbackState = "paused"; // 'playing', 'paused'
+    this.seekUpdateTimer = null;
+
+    this.fragmentStartTime = 0;
+    this.pausedTime = 0;
+  }
+
+  async _loadFragment(index) {
+    if (this.bufferCache.has(index)) {
+      return this.bufferCache.get(index);
+    }
+    if (index > this.totalFragments) {
+      return null;
+    }
+    try {
+      const response = await fetch(`${this.songUrl}/${index}.mp3`);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      this.bufferCache.set(index, audioBuffer);
+      return audioBuffer;
+    } catch (error) {
+      console.error(`Error loading fragment ${index}:`, error);
+      return null;
+    }
+  }
+
+  _preloadNext() {
+    this._loadFragment(this.currentFragmentIndex + 1);
+  }
+
+  async _playFragment(index, offset = 0) {
+    if (this.audioContext.state === "closed") return;
+    const buffer = await this._loadFragment(index);
+    if (!buffer) {
+      if (index > this.totalFragments) {
+        this.onSongEnd();
+        this.playbackState = "paused";
+        this.onStateChange("paused");
       }
-
-      const nextFragment = numberOfFragments.current + 1;
-      const howl = new Howl({
-        src: `${root}/${artist}/${song}/${nextFragment}.mp3`,
-        preload: true,
-        format: ["mp3"],
-        onloaderror: () => {
-          attemptCount++;
-        },
-      });
-
-      howl.once("load", () => {
-        attemptCount = 0;
-      });
-    };
-
-    const preloadTimer = setInterval(preloadNext, 5000);
-
-    return () => {
-      clearInterval(preloadTimer);
-    };
-  }, [root, artist, song, volume]);
-
-  const playNext = async () => {
-    numberOfFragments.current++;
-    if (numberOfFragments.current > totalFragments) {
-      setEndSong(true);
-    } else {
-      setEndSong(false);
-      sound.current = new Howl({
-        src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
-        format: ["mp3"],
-        preload: true,
-        volume: sound.current.volume(),
-        onend: playNext,
-      });
-      sound.current.play();
-      //add time of the fragment to the seek
-    }
-  };
-
-  const playPrevious = async () => {
-    if (numberOfFragments.current === 1) {
-      setPreviousSong(true);
-    }
-    sound.current.stop();
-    setSeek(0);
-    numberOfFragments.current = 1;
-    sound.current = new Howl({
-      src: `${root}/${artist}/${song}/1.mp3`,
-      volume: sound.current.volume(),
-      onend: playNext,
-    });
-    sound.current.play();
-  };
-
-  const startPlaying = async () => {
-    setIsPlaying(true);
-    if (!sound.current) {
-      numberOfFragments.current = 1;
-      // import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
-      //   sound.current = new Howl({
-      //     src: [module.default],
-      //     volume: volume,
-      //     onend: playNext,
-      //   });
-      //   sound.current.play();
-      // });
-      sound.current = new Howl({
-        src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
-        volume: volume,
-        onend: playNext,
-      });
-      sound.current.play();
-    } else {
-      sound.current.play();
-    }
-  };
-
-  const pausePlaying = () => {
-    setIsPlaying(false);
-    sound.current.pause();
-  };
-
-  // const resetPlaying = () => {
-  //   setIsPlaying(false);
-  //   setSeek(0);
-  //   numberOfFragments.current = 1;
-  //   if (sound.current) {
-  //     sound.current.stop();
-  //     sound.current = null;
-  //   }
-  // };
-
-  useEffect(() => {
-    if (sound.current) {
-      sound.current.stop();
-      sound.current = null;
-      setIsPlaying(false);
-      setIsPlaying(true);
-    }
-  }, [artist, song]);
-
-  //Update volume for all fragments
-  useEffect(() => {
-    if (sound.current) {
-      sound.current.volume(volume);
-    }
-  }, [volume]);
-
-  //print each second the current time
-  useEffect(() => {
-    // if sound is playing, set ttime to setSeek
-    if (sound.current) {
-      sound.current.on("play", () => {
-        setInterval(() => {
-          setElapsedTime(sound.current.seek());
-        }, 1015);
-      });
-    }
-  }, [sound.current]);
-
-  //listen elapsed time
-  useEffect(() => {
-    if (sound.current && parseInt(elapsedTime) >= 0 && parseInt(elapsedTime) <= 10) {
-      setSeek(numberOfFragments.current * 10 + sound.current.seek() - 10);
-    }
-  }, [elapsedTime, setSeek]);
-
-  //if userSeek has changed, change seek of the player change the fragment number and the seek of the player
-  useEffect(() => {
-    if (sound.current) {
-      var newValueFragment = parseInt(userSeek / 10) + 1;
-      var remaingNewValueFragment = userSeek % 10;
-      setSeekPlayer(remaingNewValueFragment);
-      //stop song, play new fragment and set remaing time to current sound
-      sound.current.stop();
-      numberOfFragments.current = newValueFragment;
-      // import(`${root}/${artist}/${song}/${numberOfFragments.current}.mp3`).then((module) => {
-      //   sound.current = new Howl({
-      //     src: [module.default],
-      //     volume: volume,
-      //     onend: playNext,
-      //   });
-      //   sound.current.play();
-      //   sound.current.seek(remaingNewValueFragment);
-      // });
-      const fetchNewFragment = async () => {
-        sound.current = new Howl({
-          src: `${root}/${artist}/${song}/${numberOfFragments.current}.mp3`,
-          volume: volume,
-          onend: playNext,
-        });
-        sound.current.play();
-        sound.current.seek(remaingNewValueFragment);
-      };
-      fetchNewFragment();
-    }
-  }, [userSeek, root, artist, song, totalFragments]);
-
-  //if seekPlayer change seek current fragment
-  useEffect(() => {
-    if (sound.current) {
-      sound.current.seek(seekPlayer);
-    }
-  }, [seekPlayer]);
-
-  //if root changes stop sound
-  useEffect(() => {
-    if (sound.current) {
-      sound.current.stop();
-      sound.current = null;
-    }
-  }, [root]);
-
-  //if song change when is not playing, start playing, if is playing stop and start playing
-  useEffect(() => {
-    if (song === null || song === undefined || song === "") {
-      setIsPlaying(false);
-    }
-
-    if (changePlaylist && sound.current) {
-      sound.current.stop();
-      sound.current = null;
-      setIsPlaying(false);
       return;
     }
 
-    if (!changePlaylist) {
-      if (isPlaying) {
-        if (sound.current) {
-          sound.current.stop();
-          sound.current = null;
-        }
-        startPlaying();
-      } else {
-        startPlaying();
-      }
+    if (this.sourceNode) {
+      this.sourceNode.onended = null;
+      this.sourceNode.stop();
     }
-  }, [changePlaylist, song]);
+
+    this.sourceNode = this.audioContext.createBufferSource();
+    this.sourceNode.buffer = buffer;
+    this.sourceNode.connect(this.gainNode);
+
+    this.sourceNode.onended = () => {
+      if (this.playbackState === "playing") {
+        this.currentFragmentIndex++;
+        this._playFragment(this.currentFragmentIndex);
+      }
+    };
+
+    this.sourceNode.start(0, offset);
+    this.currentFragmentIndex = index;
+    this.fragmentStartTime = this.audioContext.currentTime - offset;
+    this.playbackState = "playing";
+    this.onStateChange("playing");
+    this._startSeekUpdater();
+    this._preloadNext();
+  }
+
+  _startSeekUpdater() {
+    cancelAnimationFrame(this.seekUpdateTimer);
+    const update = () => {
+      if (this.playbackState === "playing") {
+        const baseTime = (this.currentFragmentIndex - 1) * FRAGMENT_DURATION;
+        const elapsedInFragment = this.audioContext.currentTime - this.fragmentStartTime;
+        this.onSeekUpdate(baseTime + elapsedInFragment);
+        this.seekUpdateTimer = requestAnimationFrame(update);
+      }
+    };
+    this.seekUpdateTimer = requestAnimationFrame(update);
+  }
+
+  play() {
+    if (this.playbackState === "playing") return;
+    this.audioContext.resume();
+    const resumeFragment = Math.floor(this.pausedTime / FRAGMENT_DURATION) + 1;
+    const resumeOffset = this.pausedTime % FRAGMENT_DURATION;
+    this._playFragment(resumeFragment, resumeOffset);
+  }
+
+  pause() {
+    if (this.playbackState === "paused" || !this.sourceNode) return;
+    cancelAnimationFrame(this.seekUpdateTimer);
+    const baseTime = (this.currentFragmentIndex - 1) * FRAGMENT_DURATION;
+    const elapsedInFragment = this.audioContext.currentTime - this.fragmentStartTime;
+    this.pausedTime = baseTime + elapsedInFragment;
+    this.sourceNode.onended = null;
+    this.sourceNode.stop();
+    this.sourceNode = null;
+    this.playbackState = "paused";
+    this.onStateChange("paused");
+  }
+
+  seek(time) {
+    const wasPlaying = this.playbackState === "playing";
+    this.pause();
+    this.pausedTime = time;
+    if (wasPlaying) {
+      this.play();
+    }
+  }
+
+  setVolume(volume) {
+    this.gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+  }
+
+  destroy() {
+    this.pause();
+    if (this.audioContext.state !== "closed") {
+      this.audioContext.close();
+    }
+    this.bufferCache.clear();
+  }
+}
+
+const SongPlayer = ({ colorText, root, artist, song, setPreviousSong, setEndSong, totalFragments, volume, setSeek, userSeek }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef(null);
+  const isUserSeekingRef = useRef(false);
+
+  useEffect(() => {
+    playerRef.current?.destroy();
+
+    if (!song || !artist) return;
+
+    const player = new AudioPlayer({
+      songUrl: `${root}/${artist}/${song}`,
+      totalFragments,
+      onStateChange: (state) => setIsPlaying(state === "playing"),
+      onSeekUpdate: (time) => {
+        if (!isUserSeekingRef.current) {
+          setSeek(time);
+        }
+      },
+      onSongEnd: () => setEndSong(true),
+    });
+    playerRef.current = player;
+    player.play();
+
+    return () => {
+      player.destroy();
+    };
+  }, [song, artist, root, totalFragments, setEndSong, setSeek]);
+
+  useEffect(() => {
+    playerRef.current?.setVolume(volume);
+  }, [volume]);
+
+  useEffect(() => {
+    if (userSeek === undefined) return;
+
+    isUserSeekingRef.current = true;
+    playerRef.current?.seek(userSeek);
+
+    const timeoutId = setTimeout(() => {
+      isUserSeekingRef.current = false;
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [userSeek]);
+
+  const togglePlayPause = useCallback(() => {
+    if (isPlaying) {
+      playerRef.current?.pause();
+    } else {
+      playerRef.current?.play();
+    }
+  }, [isPlaying]);
+
+  const playPrevious = useCallback(() => {
+    const currentTime = playerRef.current?.pausedTime || 0;
+    if (currentTime < 2) {
+      setPreviousSong(true);
+    } else {
+      playerRef.current?.seek(0);
+    }
+  }, [setPreviousSong]);
 
   return (
     <div className="relative flex flex-row justify-center ">
-      <div className="flex gap-8">
-        <button
-          onClick={() => playPrevious()}
-          style={{ border: `4px solid transparent` }}
-          className=" rounded-full p-2 hover:scale-105"
-        >
+      <div className="flex gap-8 items-center">
+        <button onClick={playPrevious} className="rounded-full p-2 hover:scale-105">
           <SkipBack color={colorText} />
         </button>
-        <button
-          onClick={() => (isPlaying ? pausePlaying() : startPlaying())}
-          style={{ border: `4px solid ${colorText}` }}
-          className="border-4 rounded-full p-2 hover:scale-105"
-        >
+        <button onClick={togglePlayPause} style={{ border: `4px solid ${colorText}` }} className="rounded-full p-2 hover:scale-105">
           {isPlaying ? <Pause color={colorText} /> : <Play color={colorText} />}
         </button>
-
-        <button
-          onClick={() => setEndSong(true)}
-          style={{ border: `4px solid transparent` }}
-          className="border-4 rounded-full p-2 hover:scale-105"
-        >
+        <button onClick={() => setEndSong(true)} className="rounded-full p-2 hover:scale-105">
           <SkipForward color={colorText} />
         </button>
       </div>
@@ -265,18 +225,17 @@ const SongPlayer = ({
   );
 };
 
-export default SongPlayer;
-
 SongPlayer.propTypes = {
   colorText: PropTypes.string,
   root: PropTypes.string.isRequired,
   artist: PropTypes.string.isRequired,
   song: PropTypes.string.isRequired,
-  setPreviousSong: PropTypes.func,
+  setPreviousSong: PropTypes.func.isRequired,
   setEndSong: PropTypes.func.isRequired,
   totalFragments: PropTypes.number,
   volume: PropTypes.number,
-  setSeek: PropTypes.func,
+  setSeek: PropTypes.func.isRequired,
   userSeek: PropTypes.number,
-  changePlaylist: PropTypes.bool,
 };
+
+export default SongPlayer;
