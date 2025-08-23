@@ -4,6 +4,7 @@ import Playlist from "./components/icons/Playlist";
 import Bienvenida from "./components/Bienvenida";
 import Drawer from "react-modern-drawer";
 import "react-modern-drawer/dist/index.css";
+import SongListSkeleton from "./components/skeletons/SongListSkeleton";
 
 const App = lazy(() => import("./App"));
 
@@ -48,12 +49,10 @@ const Home = () => {
     }
   };
 
-  const togglePlaylist = () => {
-    setOpenPlaylist((prevState) => !prevState);
-  };
+  const togglePlaylist = () => setOpenPlaylist((prevState) => !prevState);
 
   const renderPlaylists = (isMobile = false) => (
-    <div className="text-sm w-full items-center flex flex-col text-white pl-1 pr-2 gap-y-1">
+    <div className="p-2">
       {playlists.map((plays) => (
         <div
           key={plays.id}
@@ -61,14 +60,14 @@ const Home = () => {
             selectPlaylist(plays);
             if (isMobile) togglePlaylist();
           }}
-          className={`p-2 w-full cursor-pointer rounded-lg hover:bg-black/30 transition duration-300 ease-in-out flex gap-x-2 items-center ${
-            selectedPlaylist && plays.id === selectedPlaylist.id ? "bg-black/50 hover:bg-black/60" : ""
+          className={`flex items-center gap-4 p-2 w-full cursor-pointer rounded-lg transition-colors duration-200 ${
+            selectedPlaylist?.id === plays.id ? "bg-white/20" : "hover:bg-white/10"
           }`}
         >
-          <img src={plays.cover} alt={plays.name} className="w-12 h-w-12 object-cover rounded-xl" loading="lazy" />
-          <div className="flex flex-col">
-            <p className="font-bold m-0">{plays.name}</p>
-            <p>{plays.tracks} songs</p>
+          <img src={plays.cover} alt={plays.name} className="size-12 object-cover rounded-md" loading="lazy" />
+          <div className="text-white">
+            <p className="font-bold">{plays.name}</p>
+            <p className="text-sm opacity-70">{plays.tracks} songs</p>
           </div>
         </div>
       ))}
@@ -76,60 +75,47 @@ const Home = () => {
   );
 
   return (
-    <div className="flex flex-row w-full h-screen overflow-hidden hover:cursor-default">
-      {/* LEFT - DESKTOP */}
-      <div className="hidden sm:block sm:w-[230px] py-5 bg-black/50 text-black overflow-y-auto">
-        <div className="flex w-full justify-center items-center ">
-          <img
-            className="w-32 h-w-32 object-cover mb-3 invert"
-            src="https://cdn-icons-png.flaticon.com/512/14793/14793826.png"
-            alt="Logo music player"
-            loading="eager"
-          />
+    <div className="flex w-full h-screen bg-black text-white overflow-hidden">
+      {/* SIDEBAR - DESKTOP */}
+      <aside className="hidden sm:flex flex-col w-[250px] bg-black flex-shrink-0">
+        <div className="p-4">
+          <img className="w-32 invert" src="https://cdn-icons-png.flaticon.com/512/14793/14793826.png" alt="Logo" />
         </div>
-        <article className="w-full py-4 pl-5 rounded-r-3xl bg-gradient-to-r from-black/80 to-black/0 flex gap-x-2 mb-5">
-          <div className="size-8 object-cover">
-            <Playlist color={"#fff"} />
-          </div>
-          <h2 className="font-bold text-lg text-white">Playlists</h2>
-        </article>
-        {renderPlaylists()}
-      </div>
+        <div className="flex items-center gap-3 px-4 py-2 mb-2">
+          <Playlist color={"#fff"} />
+          <h2 className="font-bold text-lg">Playlists</h2>
+        </div>
+        <nav className="flex-grow overflow-y-auto">{renderPlaylists()}</nav>
+      </aside>
 
-      {/* MOBILE DRAWER */}
-      <button className="sm:hidden bg-slate-400/90 p-3 w-40 rounded-md h-20 absolute bottom-0 left-0 text-center z-10" onClick={togglePlaylist}>
-        Playlists
+      {/* MOBILE PLAYLIST DRAWER */}
+      <button className="sm:hidden fixed bottom-4 left-4 z-20 bg-white/20 backdrop-blur-md p-3 rounded-full shadow-lg" onClick={togglePlaylist}>
+        <Playlist color={"#fff"} />
       </button>
-      <Drawer
-        open={openPlaylist}
-        onClose={togglePlaylist}
-        direction="bottom"
-        className="overflow-y-auto"
-        size={"60vh"}
-        enableOverlay
-        style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
-      >
-        <article className="w-full py-4 pl-5 rounded-r-3xl bg-gradient-to-r from-black/80 to-black/0 flex gap-x-2 mb-5">
-          <div className="size-8 object-cover">
-            <Playlist color={"#fff"} />
-          </div>
-          <h2 className="font-bold text-lg text-white">Playlists</h2>
-        </article>
+      <Drawer open={openPlaylist} onClose={togglePlaylist} direction="left" className="!w-64 !bg-black">
+        <div className="p-4">
+          <img className="w-32 invert" src="https://cdn-icons-png.flaticon.com/512/14793/14793826.png" alt="Logo" />
+        </div>
         {renderPlaylists(true)}
       </Drawer>
 
-      {/* CENTER */}
-      <div className="flex overflow-y-auto w-full">
-        {selectedPlaylist && !isLoading && songs.length > 0 ? (
-          <Suspense fallback={<div className="w-full h-full bg-gray-800 animate-pulse"></div>}>
-            <App URL_BASE={URL_BASE} playlist={songs} playlistData={selectedPlaylist} folder={selectedPlaylist.root} />
+      {/* MAIN CONTENT */}
+      <main className="flex-grow flex flex-col overflow-hidden">
+        {selectedPlaylist ? (
+          <Suspense fallback={<SongListSkeleton count={15} />}>
+            <App
+              key={selectedPlaylist.id}
+              URL_BASE={URL_BASE}
+              playlist={songs}
+              playlistData={selectedPlaylist}
+              folder={selectedPlaylist.root}
+              isLoading={isLoading}
+            />
           </Suspense>
-        ) : isLoading ? (
-          <div className="w-full h-full bg-gray-800 animate-pulse"></div>
         ) : (
           <Bienvenida />
         )}
-      </div>
+      </main>
     </div>
   );
 };
