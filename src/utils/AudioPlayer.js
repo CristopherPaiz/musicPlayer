@@ -26,7 +26,7 @@ export class AudioPlayer {
     this.pendingFragments = new Set();
     this.mediaMetadataSet = false;
 
-    this.worker = new Worker("/audio-worker.js");
+    this.worker = new Worker(new URL("./audio-worker.js", import.meta.url), { type: "module" });
     this.worker.onmessage = this._handleWorkerMessage.bind(this);
 
     this._setupMediaSessionHandlers();
@@ -105,11 +105,9 @@ export class AudioPlayer {
 
     this.currentFragmentIndex = index;
 
-    // CORRECCIÓN CLAVE: Si el índice está fuera de rango, solo notificamos y paramos.
     if (index > this.totalFragments) {
       console.log("[AudioPlayer] Fin de la canción alcanzado.");
-      this.onSongEnd(); // Notificamos al componente principal.
-      // Eliminamos la llamada a this.pause() que causaba el conflicto.
+      this.onSongEnd();
       return;
     }
 
@@ -155,7 +153,6 @@ export class AudioPlayer {
 
         if (currentTime >= this.song.length) {
           this.onSeekUpdate(this.song.length);
-          // No detenemos el timer aquí, dejamos que el ciclo de _playFragment maneje el final.
         } else {
           this.onSeekUpdate(currentTime);
         }

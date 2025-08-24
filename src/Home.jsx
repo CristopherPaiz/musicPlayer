@@ -140,22 +140,21 @@ const Home = () => {
 
   const skipSong = useCallback(
     (direction) => {
-      if (!currentSong || queue.length === 0) return;
+      if (!currentSong || !queue || queue.length === 0) return;
 
-      const currentIndexInQueue = queue.findIndex((s) => s.id === currentSong.id);
+      const currentIndex = queue.findIndex((s) => s.id === currentSong.id);
+
+      if (currentIndex === -1) return;
+
       let nextSong = null;
 
       if (direction === "forward") {
-        if (currentIndexInQueue < queue.length - 1) {
-          nextSong = queue[currentIndexInQueue + 1];
+        if (currentIndex < queue.length - 1) {
+          nextSong = queue[currentIndex + 1];
         }
       } else {
-        const songOriginPlaylist = playlists.find((p) => p.root === currentSong.root);
-        if (!songOriginPlaylist) return;
-        const sourceList = playlistCache[songOriginPlaylist.id] || [];
-        const originalIndex = sourceList.findIndex((s) => s.id === currentSong.id);
-        if (originalIndex > 0) {
-          nextSong = sourceList[originalIndex - 1];
+        if (currentIndex > 0) {
+          nextSong = queue[currentIndex - 1];
         }
       }
 
@@ -164,8 +163,19 @@ const Home = () => {
         setIsPlaying(true);
       }
     },
-    [queue, currentSong, playlists, playlistCache]
+    [currentSong, queue]
   );
+
+  const handleSkipBack = useCallback(() => {
+    if (!currentSong) return;
+
+    if (seek > 5) {
+      setSeek(0);
+      setUserSeek(0);
+    } else {
+      skipSong("backward");
+    }
+  }, [seek, currentSong, skipSong]);
 
   useEffect(() => {
     if (!currentSong) {
@@ -247,7 +257,7 @@ const Home = () => {
     currentSong,
     isPlaying,
     onTogglePlayPause: handleTogglePlayPause,
-    onSkipBack: () => skipSong("backward"),
+    onSkipBack: handleSkipBack,
     onSkipForward: () => skipSong("forward"),
     seek,
     handleSeek,
@@ -263,7 +273,7 @@ const Home = () => {
         setIsPlaying={setIsPlaying}
         selectedSong={currentSong}
         root={currentSong ? `${URL_BASE}${currentSong.root}` : ""}
-        setPreviousSong={() => skipSong("backward")}
+        setPreviousSong={handleSkipBack}
         setEndSong={() => skipSong("forward")}
         volume={volume}
         setSeek={setSeek}

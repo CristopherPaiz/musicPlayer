@@ -84,8 +84,13 @@ const NowPlayingView = ({
       </header>
 
       <main className="flex-grow flex flex-col items-center justify-center gap-4 overflow-hidden text-center -mt-8">
-        <div className="flex-shrink-0 mt-4 px-8">
-          <img src={image} alt="cover" className="w-full max-w-xs rounded-lg shadow-2xl aspect-square object-cover" />
+        <div className="flex-shrink-0 mt-2 px-6">
+          <img
+            src={image}
+            alt="cover"
+            onClick={() => setShowLyricsMobile(true)}
+            className="w-full rounded-lg shadow-2xl aspect-square object-cover"
+          />
         </div>
         <div className="w-full px-4">
           <h2 className="text-2xl font-bold truncate">{currentSong.title}</h2>

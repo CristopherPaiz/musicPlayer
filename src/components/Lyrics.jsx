@@ -105,7 +105,7 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
 
   if (type === lyricType.NONE) {
     return (
-      <div className="flex items-center justify-center h-full w-full text-white/50">
+      <div className="flex items-center justify-center h-full pb-24 w-full text-white/50">
         <p>Letra no disponible</p>
       </div>
     );
