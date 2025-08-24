@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 
-const PAUSE_THRESHOLD = 2;
+const PAUSE_THRESHOLD = 4;
 
 const lyricType = {
   SYNCED: "SYNCED",

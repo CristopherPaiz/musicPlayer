@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import Lyrics from "../Lyrics";
 import PlayerControls from "./PlayerControls";
-// Se elimina la definición del icono de aquí
+import BottomNav from "./BottomNav";
+import VerticalVolumeSlider from "./VerticalVolumeSlider";
 
 const DesktopNowPlayingContent = ({ currentSong, image, lyrics, seek, colors, onClose }) => (
   <div className="h-full w-full flex flex-col bg-[var(--background-color)] p-8 overflow-hidden">
@@ -31,8 +32,40 @@ const DesktopNowPlayingContent = ({ currentSong, image, lyrics, seek, colors, on
   </div>
 );
 
-const NowPlayingView = ({ isDesktopView = false, currentSong, image, lyrics, seek, colors, onClose, ...controlProps }) => {
+const NowPlayingView = ({
+  isDesktopView = false,
+  currentSong,
+  image,
+  lyrics,
+  seek,
+  colors,
+  onClose,
+  volume,
+  setVolume,
+  playlistName,
+  onPlaylistClick,
+  onQueueClick,
+  ...controlProps
+}) => {
   const [showLyricsMobile, setShowLyricsMobile] = useState(false);
+  const [showVolumeControl, setShowVolumeControl] = useState(false);
+  const volumeControlRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (volumeControlRef.current && !volumeControlRef.current.contains(event.target)) {
+        setShowVolumeControl(false);
+      }
+    };
+    if (showVolumeControl) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showVolumeControl]);
 
   if (!currentSong) return null;
 
@@ -41,8 +74,8 @@ const NowPlayingView = ({ isDesktopView = false, currentSong, image, lyrics, see
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col p-4" style={{ backgroundColor: colors.dark, color: colors.text }}>
-      <header className="flex-shrink-0 flex justify-between items-center">
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: colors.dark, color: colors.text }}>
+      <header className="flex-shrink-0 flex justify-between items-center p-4">
         <button onClick={onClose} className="p-2 bg-black/20 rounded-full z-10">
           <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
@@ -50,25 +83,39 @@ const NowPlayingView = ({ isDesktopView = false, currentSong, image, lyrics, see
         </button>
       </header>
 
-      <main className="flex-grow flex flex-col items-center justify-center gap-6 overflow-hidden text-center">
-        <div className="flex-shrink-0 mt-4">
-          <img src={image} alt="cover" className="size-64 rounded-lg shadow-2xl aspect-square object-cover" />
+      <main className="flex-grow flex flex-col items-center justify-center gap-4 overflow-hidden text-center -mt-8">
+        <div className="flex-shrink-0 mt-4 px-8">
+          <img src={image} alt="cover" className="w-full max-w-xs rounded-lg shadow-2xl aspect-square object-cover" />
         </div>
-        <div className="w-full">
+        <div className="w-full px-4">
           <h2 className="text-2xl font-bold truncate">{currentSong.title}</h2>
           <h3 className="text-lg opacity-80 truncate">{currentSong.artist}</h3>
+          {playlistName && <p className="text-xs opacity-60 mt-1 truncate">De la playlist: {playlistName}</p>}
         </div>
-        <button onClick={() => setShowLyricsMobile(true)} className="bg-white/10 px-4 py-2 rounded-full text-sm">
+        <button onClick={() => setShowLyricsMobile(true)} className="bg-white/10 px-4 py-2 rounded-full text-sm mt-2">
           Mostrar Letra
         </button>
       </main>
 
-      <footer className="flex-shrink-0 w-full">
-        <PlayerControls currentSong={currentSong} seek={seek} {...controlProps} />
+      <footer className="relative flex-shrink-0 w-full pb-32">
+        <PlayerControls currentSong={currentSong} seek={seek} {...controlProps} onVolumeClick={() => setShowVolumeControl((prev) => !prev)} />
+        <div ref={volumeControlRef} className="absolute bottom-44 right-14">
+          {showVolumeControl && <VerticalVolumeSlider volume={volume} setVolume={setVolume} />}
+        </div>
       </footer>
 
+      <BottomNav
+        onPlaylistClick={onPlaylistClick}
+        onQueueClick={onQueueClick}
+        style={{
+          position: "absolute",
+          backgroundColor: colors.dark,
+          filter: "brightness(0.8)",
+        }}
+      />
+
       {showLyricsMobile && (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col z-20 p-4">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col z-20 p-4 pb-20">
           <header className="flex-shrink-0 w-full flex justify-end">
             <button onClick={() => setShowLyricsMobile(false)} className="p-2 bg-black/20 rounded-full z-10">
               <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -102,7 +149,11 @@ NowPlayingView.propTypes = {
   seek: PropTypes.number.isRequired,
   colors: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
+  volume: PropTypes.number,
+  setVolume: PropTypes.func,
+  playlistName: PropTypes.string,
+  onPlaylistClick: PropTypes.func,
+  onQueueClick: PropTypes.func,
 };
 
-// Se elimina la exportación del icono de aquí
 export default NowPlayingView;

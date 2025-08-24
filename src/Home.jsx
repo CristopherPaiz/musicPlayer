@@ -13,7 +13,6 @@ import NowPlayingView from "./components/player/NowPlayingView";
 import QueuePanel from "./components/player/QueuePanel";
 import PlayerControls from "./components/player/PlayerControls";
 import VolumeIcon from "./components/icons/Volume";
-import ExpandIcon from "./components/icons/ExpandIcon";
 
 const PlaylistView = lazy(() => import("./PlaylistView"));
 
@@ -59,6 +58,9 @@ const Home = () => {
 
   const selectPlaylist = useCallback(
     async (playlist) => {
+      if (isPlaylistDrawerOpen) setPlaylistDrawerOpen(false);
+      if (isNowPlayingOpenMobile) setNowPlayingOpenMobile(false);
+
       if (selectedPlaylist?.id === playlist.id) {
         setMainDesktopView("list");
         return;
@@ -92,65 +94,77 @@ const Home = () => {
         setIsLoading(false);
       }
     },
-    [selectedPlaylist, playlistCache]
+    [selectedPlaylist, playlistCache, isPlaylistDrawerOpen, isNowPlayingOpenMobile]
   );
 
-  const handleSelectSong = (song, songList = playlistSongs) => {
+  const handleSelectSong = (song, isFromQueuePanel = false) => {
+    if (currentSong?.id === song.id) {
+      handleTogglePlayPause();
+      return;
+    }
+
+    setCurrentSong(song);
+    setIsPlaying(true);
     setMainDesktopView("lyrics");
-    if (currentSong?.id !== song.id) {
-      setCurrentSong(song);
+
+    if (!isFromQueuePanel) {
+      const sourcePlaylist = playlistSongs;
       if (random) {
-        const remaining = songList.filter((s) => s.id !== song.id);
-        const shuffled = remaining.sort(() => Math.random() - 0.5);
+        const otherSongs = sourcePlaylist.filter((s) => s.id !== song.id);
+        const shuffled = otherSongs.sort(() => Math.random() - 0.5);
         setQueue([song, ...shuffled]);
       } else {
-        setQueue(songList);
+        setQueue(sourcePlaylist);
       }
-      setIsPlaying(true);
-    } else {
-      handleTogglePlayPause();
     }
   };
 
   const handleSetRandom = (isRandom) => {
     setRandom(isRandom);
+    if (!currentSong) return;
+
+    const songOriginPlaylist = playlists.find((p) => p.root === currentSong.root);
+    if (!songOriginPlaylist) return;
+
+    const sourceList = playlistCache[songOriginPlaylist.id] || [];
+    if (sourceList.length === 0) return;
+
     if (isRandom) {
-      const remainingQueue = queue.filter((s) => s.id !== currentSong?.id);
-      const shuffled = remainingQueue.sort(() => Math.random() - 0.5);
-      if (currentSong) {
-        setQueue([currentSong, ...shuffled]);
-      } else {
-        setQueue(shuffled);
-      }
+      const otherSongs = sourceList.filter((s) => s.id !== currentSong.id);
+      const shuffled = otherSongs.sort(() => Math.random() - 0.5);
+      setQueue([currentSong, ...shuffled]);
     } else {
-      if (selectedPlaylist && playlistCache[selectedPlaylist.id]) {
-        setQueue(playlistCache[selectedPlaylist.id]);
-      }
+      setQueue(sourceList);
     }
   };
 
   const skipSong = useCallback(
     (direction) => {
-      if (queue.length === 0) return;
-      const currentIndex = queue.findIndex((s) => s.id === currentSong.id);
-      let nextIndex = -1;
+      if (!currentSong || queue.length === 0) return;
 
-      if (currentIndex !== -1) {
-        if (direction === "forward") {
-          nextIndex = (currentIndex + 1) % queue.length;
-        } else {
-          nextIndex = (currentIndex - 1 + queue.length) % queue.length;
+      const currentIndexInQueue = queue.findIndex((s) => s.id === currentSong.id);
+      let nextSong = null;
+
+      if (direction === "forward") {
+        if (currentIndexInQueue < queue.length - 1) {
+          nextSong = queue[currentIndexInQueue + 1];
         }
-      } else if (queue.length > 0) {
-        nextIndex = 0;
+      } else {
+        const songOriginPlaylist = playlists.find((p) => p.root === currentSong.root);
+        if (!songOriginPlaylist) return;
+        const sourceList = playlistCache[songOriginPlaylist.id] || [];
+        const originalIndex = sourceList.findIndex((s) => s.id === currentSong.id);
+        if (originalIndex > 0) {
+          nextSong = sourceList[originalIndex - 1];
+        }
       }
 
-      if (nextIndex !== -1) {
-        setCurrentSong(queue[nextIndex]);
+      if (nextSong) {
+        setCurrentSong(nextSong);
         setIsPlaying(true);
       }
     },
-    [queue, currentSong]
+    [queue, currentSong, playlists, playlistCache]
   );
 
   useEffect(() => {
@@ -242,8 +256,6 @@ const Home = () => {
     accentColor: colors.hex,
   };
 
-  const mobilePlayerProps = { ...commonPlayerProps, volume, setVolume };
-
   return (
     <div className="flex flex-col w-full h-dvh bg-black text-white overflow-hidden">
       <SongPlayer
@@ -259,7 +271,6 @@ const Home = () => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* CORRECCIÓN DE COLOR: La barra lateral ahora usa el color oscuro dinámico */}
         <aside className="hidden sm:flex flex-col w-[250px] flex-shrink-0 transition-colors duration-500" style={{ backgroundColor: colors.dark }}>
           <div className="p-4">
             <img className="w-32 invert" src="https://cdn-icons-png.flaticon.com/512/14793/14793826.png" alt="Logo" />
@@ -268,7 +279,7 @@ const Home = () => {
             <Playlist className="size-6" color="#fff" />
             <h2 className="font-bold text-lg">Playlists</h2>
           </div>
-          <nav className="flex-grow overflow-y-auto">
+          <nav className="flex-grow overflow-y-auto px-2">
             {playlists.map((plays) => (
               <div
                 key={plays.id}
@@ -278,8 +289,8 @@ const Home = () => {
                 }`}
               >
                 <img src={plays.cover} alt={plays.name} className="size-12 object-cover rounded-md" loading="lazy" />
-                <div className="text-white text-left">
-                  <p className="font-bold">{plays.name}</p>
+                <div className="text-white text-left overflow-hidden">
+                  <p className="font-bold truncate">{plays.name}</p>
                   <p className="text-sm opacity-70">{plays.tracks} songs</p>
                 </div>
               </div>
@@ -287,7 +298,6 @@ const Home = () => {
           </nav>
         </aside>
 
-        {/* CORRECCIÓN DE COLOR: El contenido principal ahora tiene un fondo de base oscuro y un gradiente sutil del color de acento */}
         <main className="flex-grow flex flex-col overflow-hidden relative transition-colors duration-500" style={{ backgroundColor: colors.dark }}>
           <div
             className="absolute inset-0 w-full h-full"
@@ -299,6 +309,7 @@ const Home = () => {
                 <PlaylistView
                   playlistData={selectedPlaylist}
                   songs={playlistSongs}
+                  queue={queue}
                   isLoading={isLoading}
                   onSelectSong={handleSelectSong}
                   currentSong={currentSong}
@@ -319,7 +330,7 @@ const Home = () => {
 
       {currentSong && (
         <footer
-          className="hidden sm:flex items-center justify-between px-4 flex-shrink-0 z-40 border-t border-white/10 h-24 transition-colors duration-500"
+          className="hidden sm:flex items-center justify-between px-4 flex-shrink-0 z-40 border-t border-white/10 h-28 transition-colors duration-500"
           style={{ backgroundColor: colors.dark }}
         >
           <div className="flex items-center gap-4 w-[30%]">
@@ -348,9 +359,6 @@ const Home = () => {
                 style={{ accentColor: colors.hex }}
               />
             </div>
-            <button onClick={() => setMainDesktopView("lyrics")} className="p-2 hover:bg-white/10 rounded-full">
-              <ExpandIcon />
-            </button>
           </div>
         </footer>
       )}
@@ -365,7 +373,13 @@ const Home = () => {
             onTogglePlayPause={handleTogglePlayPause}
             seek={seek}
           />
-          <BottomNav onPlaylistClick={() => setPlaylistDrawerOpen(true)} onQueueClick={() => setQueueDrawerOpen(true)} />
+          {!isNowPlayingOpenMobile && (
+            <BottomNav
+              style={{ position: "fixed", backgroundColor: "rgba(0,0,0,0.8)", backdropFilter: "blur(10px)" }}
+              onPlaylistClick={() => setPlaylistDrawerOpen(true)}
+              onQueueClick={() => setQueueDrawerOpen(true)}
+            />
+          )}
           {isNowPlayingOpenMobile && (
             <div className="sm:hidden">
               <NowPlayingView
@@ -373,18 +387,48 @@ const Home = () => {
                 image={currentImage}
                 lyrics={lyrics}
                 colors={colors}
-                {...mobilePlayerProps}
+                volume={volume}
+                setVolume={setVolume}
+                playlistName={selectedPlaylist?.name}
+                onPlaylistClick={() => setPlaylistDrawerOpen(true)}
+                onQueueClick={() => setQueueDrawerOpen(true)}
+                {...commonPlayerProps}
               />
             </div>
           )}
           <Drawer
+            open={isPlaylistDrawerOpen}
+            onClose={() => setPlaylistDrawerOpen(false)}
+            direction="left"
+            className="!w-64"
+            style={{ backgroundColor: colors.dark }}
+          >
+            <div className="p-4 h-full flex flex-col">
+              <h2 className="font-bold text-lg mb-4 flex-shrink-0">Playlists</h2>
+              <nav className="flex-grow overflow-y-auto">
+                {playlists.map((plays) => (
+                  <div
+                    key={plays.id}
+                    onClick={() => selectPlaylist(plays)}
+                    className="flex items-center gap-3 p-2 w-full cursor-pointer rounded-lg hover:bg-white/10"
+                  >
+                    <img src={plays.cover} alt={plays.name} className="size-10 object-cover rounded-md" loading="lazy" />
+                    <div className="text-white text-left overflow-hidden">
+                      <p className="font-semibold text-sm truncate">{plays.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </nav>
+            </div>
+          </Drawer>
+          <Drawer
             open={isQueueDrawerOpen}
             onClose={() => setQueueDrawerOpen(false)}
             direction="right"
-            className="!w-64 !z-50 h-full"
+            className="!w-64"
             style={{ backgroundColor: colors.dark }}
           >
-            <QueuePanel songs={queue} currentSong={currentSong} onSelectSong={handleSelectSong} colors={colors} />
+            <QueuePanel songs={queue} currentSong={currentSong} onSelectSong={(song) => handleSelectSong(song, true)} colors={colors} />
           </Drawer>
         </>
       )}

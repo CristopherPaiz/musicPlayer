@@ -2,18 +2,18 @@ import PropTypes from "prop-types";
 
 const QueuePanel = ({ songs, currentSong, onSelectSong, colors }) => {
   return (
-    <aside className="w-full h-full bg-black/20 flex flex-col overflow-y-auto">
+    <aside className="w-full h-full bg-black/20 flex flex-col overflow-hidden">
       <div
         style={{ backgroundColor: colors.hex, filter: "brightness(0.90)", color: colors.text }}
-        className="text-xl font-bold text-center py-4 sticky top-0 z-10"
+        className="text-xl font-bold text-center py-4 sticky top-0 z-10 flex-shrink-0"
       >
         <h3>En cola</h3>
       </div>
-      <ul className="p-2">
+      <ul className="flex-grow overflow-y-auto p-2 pb-24">
         {songs.map((song) => (
           <li
-            key={song.id}
-            onClick={() => onSelectSong(song, songs)} // Pasamos la cola actual para que se establezca correctamente
+            key={`${song.id}-${song.title}`}
+            onClick={() => onSelectSong(song, songs)}
             style={{
               backgroundColor: currentSong && song.id === currentSong.id ? colors.light : "",
               color: currentSong && song.id === currentSong.id ? colors.text : "",

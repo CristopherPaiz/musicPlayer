@@ -7,9 +7,9 @@ const QueueIcon = () => (
   </svg>
 );
 
-const BottomNav = ({ onPlaylistClick, onQueueClick }) => {
+const BottomNav = ({ onPlaylistClick, onQueueClick, style = {} }) => {
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md flex justify-around items-center h-14 z-40 border-t border-white/10">
+    <nav className="sm:hidden bottom-0 left-0 right-0 flex justify-around items-center h-14 z-40 border-t border-white/10 py-2" style={style}>
       <button onClick={onPlaylistClick} className="flex flex-col items-center gap-1 text-white/70 hover:text-white transition-colors">
         <Playlist className="size-6" color="currentColor" />
         <span className="text-xs">Playlists</span>
@@ -25,6 +25,7 @@ const BottomNav = ({ onPlaylistClick, onQueueClick }) => {
 BottomNav.propTypes = {
   onPlaylistClick: PropTypes.func.isRequired,
   onQueueClick: PropTypes.func.isRequired,
+  style: PropTypes.object,
 };
 
 export default BottomNav;

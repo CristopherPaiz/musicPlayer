@@ -32,17 +32,9 @@ input[type="range"]::-webkit-slider-thumb {
   background: #ffffff;
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -6px;
   transition: background-color 0.2s;
 }
 
-input[type="range"]:hover::-webkit-slider-thumb {
-  background: #1db954;
-}
-
-/* ... (tu código tailwind y scrollbar existente) ... */
-
-/* Animación para la barra de progreso de las letras */
 @keyframes progress-bar-animation {
   from {
     transform: scaleX(0);
