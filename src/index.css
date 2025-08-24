@@ -2,35 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
-/* define root and variable */
 :root {
-  --background-color: #f3f3f3;
-  --text-color: #333;
-  --colorLight: #333;
-  --textColorLigth: #f3f3f3;
+  --background-color: #000000;
+}
+
+body {
+  background-color: var(--background-color);
+  transition: background-color 0.5s ease;
 }
 
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #718096;
+  background-color: #4a5568;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #cbd5e0;
+  background-color: #1a202c;
 }
 
-/* Aplica estilos hover usando la variable */
-.cursor-hover:hover {
-  background-color: var(--colorLight);
-  color: var(--textColorLigth);
-  border: 1px solid rgba(128, 128, 128, 0.3);
-  box-sizing: border-box;
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -6px;
+  transition: background-color 0.2s;
 }
 
-input[type="range"] {
-  accent-color: var(--colorLight);
-  filter: brightness(0.9);
+input[type="range"]:hover::-webkit-slider-thumb {
+  background: #1db954;
+}
+
+/* ... (tu código tailwind y scrollbar existente) ... */
+
+/* Animación para la barra de progreso de las letras */
+@keyframes progress-bar-animation {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.lyrics-progress-bar {
+  transform-origin: left;
+  animation-name: progress-bar-animation;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+/* Helper para ocultar la barra de scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

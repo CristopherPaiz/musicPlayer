@@ -1,4 +1,6 @@
-const Random = ({ color }) => {
+import PropTypes from "prop-types";
+
+const Random = ({ className, color }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -10,6 +12,7 @@ const Random = ({ color }) => {
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={className}
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M18 4l3 3l-3 3" />
@@ -18,6 +21,15 @@ const Random = ({ color }) => {
       <path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
     </svg>
   );
+};
+
+Random.propTypes = {
+  className: PropTypes.string,
+  color: PropTypes.string,
+};
+
+Random.defaultProps = {
+  color: "currentColor",
 };
 
 export default Random;

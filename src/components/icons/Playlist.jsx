@@ -1,7 +1,8 @@
+import PropTypes from "prop-types";
 
-const Playlist = ({color}) => {
+const Playlist = ({ className, color }) => {
   return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
       <g fill={color}>
         <path
           fillRule="evenodd"
@@ -12,6 +13,15 @@ const Playlist = ({color}) => {
       </g>
     </svg>
   );
-}
+};
+
+Playlist.propTypes = {
+  className: PropTypes.string,
+  color: PropTypes.string,
+};
+
+Playlist.defaultProps = {
+  color: "currentColor",
+};
 
 export default Playlist;

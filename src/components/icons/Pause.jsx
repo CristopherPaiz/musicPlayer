@@ -1,4 +1,6 @@
-const Pause = ({ color }) => {
+import PropTypes from "prop-types";
+
+const Pause = ({ className, color }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -10,6 +12,7 @@ const Pause = ({ color }) => {
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={className}
     >
       <path d="M0 0h24v24H0z" stroke="none" />
       <path
@@ -19,6 +22,15 @@ const Pause = ({ color }) => {
       />
     </svg>
   );
+};
+
+Pause.propTypes = {
+  className: PropTypes.string,
+  color: PropTypes.string,
+};
+
+Pause.defaultProps = {
+  color: "currentColor",
 };
 
 export default Pause;

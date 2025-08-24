@@ -2,12 +2,12 @@ import PropTypes from "prop-types";
 
 const PlaylistHeader = ({ playlistData, color, colorDark, colorText }) => {
   return (
+    // CORRECCIÓN: El fondo ahora es transparente para dejar ver el gradiente del panel principal.
     <header
       style={{
-        background: `linear-gradient(to bottom, ${colorDark} 0%, ${color} 100%)`,
         color: colorText,
       }}
-      className="flex p-4 sm:p-6 gap-4 items-center w-full flex-shrink-0"
+      className="flex p-4 sm:p-6 gap-4 items-center w-full flex-shrink-0 bg-transparent"
     >
       <img src={playlistData.cover} alt={playlistData.name} className="size-24 sm:size-32 rounded-lg shadow-lg" />
       <div className="flex flex-col gap-y-1 overflow-hidden">

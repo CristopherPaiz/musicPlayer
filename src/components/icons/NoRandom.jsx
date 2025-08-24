@@ -1,4 +1,6 @@
-const NoRandom = ({ color }) => {
+import PropTypes from "prop-types";
+
+const NoRandom = ({ className, color }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -10,6 +12,7 @@ const NoRandom = ({ color }) => {
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={className}
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M21 17l-18 0" />
@@ -18,6 +21,15 @@ const NoRandom = ({ color }) => {
       <path d="M21 7l-18 0" />
     </svg>
   );
+};
+
+NoRandom.propTypes = {
+  className: PropTypes.string,
+  color: PropTypes.string,
+};
+
+NoRandom.defaultProps = {
+  color: "currentColor",
 };
 
 export default NoRandom;

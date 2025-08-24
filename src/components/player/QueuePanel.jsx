@@ -1,32 +1,29 @@
 import PropTypes from "prop-types";
 
-const QueuePanel = ({ songs, selectedSong, URL_BASE, folder, onSelectSong, color }) => {
+const QueuePanel = ({ songs, currentSong, onSelectSong, colors }) => {
   return (
-    // Se eliminaron las clases `hidden sm:block` para que el Drawer controle la visibilidad
-    <aside className="w-full bg-black/20 flex-shrink-0 overflow-y-auto">
-      <div style={{ backgroundColor: color, filter: "brightness(0.90)" }} className="text-xl font-bold text-center py-4 sticky top-0">
+    <aside className="w-full h-full bg-black/20 flex flex-col overflow-y-auto">
+      <div
+        style={{ backgroundColor: colors.hex, filter: "brightness(0.90)", color: colors.text }}
+        className="text-xl font-bold text-center py-4 sticky top-0 z-10"
+      >
         <h3>En cola</h3>
       </div>
       <ul className="p-2">
         {songs.map((song) => (
           <li
             key={song.id}
-            onClick={() => onSelectSong(song)}
+            onClick={() => onSelectSong(song, songs)} // Pasamos la cola actual para que se establezca correctamente
             style={{
-              backgroundColor: song.id === selectedSong.id ? "var(--colorLight)" : "",
-              color: song.id === selectedSong.id ? "var(--textColorLigth)" : "",
+              backgroundColor: currentSong && song.id === currentSong.id ? colors.light : "",
+              color: currentSong && song.id === currentSong.id ? colors.text : "",
             }}
-            className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-white/10"
+            className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-white/10 transition-colors"
           >
-            <img
-              src={`${URL_BASE}${folder}/${song.artist}/${song.title}/cover.webp`}
-              alt="cover"
-              loading="lazy"
-              className="size-10 object-cover rounded-md flex-shrink-0"
-            />
+            <img src={song.coverUrl} alt="cover" loading="lazy" className="size-10 object-cover rounded-md flex-shrink-0" />
             <div className="overflow-hidden">
-              <p className="font-semibold text-sm truncate">{song.title}</p>
-              <p className="text-xs truncate opacity-70">{song.artist}</p>
+              <p className={`font-semibold text-sm truncate ${currentSong?.id === song.id ? "text-green-400" : "text-white"}`}>{song.title}</p>
+              <p className="text-xs truncate opacity-70 text-white/80">{song.artist}</p>
             </div>
           </li>
         ))}
@@ -37,11 +34,9 @@ const QueuePanel = ({ songs, selectedSong, URL_BASE, folder, onSelectSong, color
 
 QueuePanel.propTypes = {
   songs: PropTypes.array.isRequired,
-  selectedSong: PropTypes.object,
-  URL_BASE: PropTypes.string.isRequired,
-  folder: PropTypes.string.isRequired,
+  currentSong: PropTypes.object,
   onSelectSong: PropTypes.func.isRequired,
-  color: PropTypes.string,
+  colors: PropTypes.object.isRequired,
 };
 
 export default QueuePanel;

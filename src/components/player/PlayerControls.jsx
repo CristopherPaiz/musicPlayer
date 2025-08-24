@@ -1,95 +1,69 @@
 import PropTypes from "prop-types";
-import SongPlayer from "../SongPlayer";
 import Random from "../icons/Random";
-import NoRandom from "../icons/NoRandom";
+import SkipBack from "../icons/SkipBack";
+import Pause from "../icons/Pause";
+import Play from "../icons/Play";
+import SkipForward from "../icons/SkipForward";
 
 const PlayerControls = ({
-  selectedSong,
-  colorText,
-  URL_BASE,
-  folder,
-  setPreviousSong,
-  setEndSong,
-  volume,
-  setVolume,
+  currentSong,
+  isPlaying,
+  onTogglePlayPause,
+  onSkipBack,
+  onSkipForward,
   seek,
-  setSeek,
   handleSeek,
-  userSeek,
   random,
   setRandom,
+  accentColor,
 }) => {
-  if (!selectedSong) return null;
+  if (!currentSong) return null;
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 py-2 flex flex-col gap-2 flex-shrink-0 z-20">
-      <div className="flex items-center gap-4 text-xs">
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="flex items-center justify-center gap-6">
+        <button onClick={() => setRandom(!random)} className="p-2 hover:text-white text-white/70 transition-colors">
+          <Random style={{ color: random ? accentColor : "currentColor" }} />
+        </button>
+        <button onClick={onSkipBack} className="p-2 hover:scale-110 transition-transform">
+          <SkipBack />
+        </button>
+        <button onClick={onTogglePlayPause} className="bg-white text-black rounded-full p-3 hover:scale-110 transition-transform shadow-lg">
+          <div className="size-6">{isPlaying ? <Pause /> : <Play />}</div>
+        </button>
+        <button onClick={onSkipForward} className="p-2 hover:scale-110 transition-transform">
+          <SkipForward />
+        </button>
+      </div>
+      <div className="flex items-center gap-4 text-xs w-full max-w-2xl">
         <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
         <input
           type="range"
           min="0"
-          max={Math.floor(selectedSong.length)}
+          max={Math.floor(currentSong.length)}
           value={seek}
           onChange={handleSeek}
-          className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--colorLight)]"
+          className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
+          // CORRECCIÓN DE COLOR: La barra de progreso ahora usa el color de acento dinámico.
+          style={{ accentColor: accentColor }}
         />
-        <span>{new Date(selectedSong.length * 1000).toISOString().substr(14, 5)}</span>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <div className="flex-1 flex justify-start">
-          <button onClick={() => setRandom(!random)} className="p-2 hover:bg-white/10 rounded-full">
-            {random ? <Random color={colorText} /> : <NoRandom color={colorText} />}
-          </button>
-        </div>
-        <div className="flex-1 flex justify-center">
-          <SongPlayer
-            colorText={colorText}
-            root={`${URL_BASE}${folder}`}
-            artist={selectedSong.artist}
-            song={selectedSong.title}
-            setPreviousSong={setPreviousSong}
-            setEndSong={setEndSong}
-            totalFragments={selectedSong.fragments}
-            volume={volume}
-            setSeek={setSeek}
-            userSeek={userSeek}
-          />
-        </div>
-        <div className="flex-1 hidden sm:flex items-center justify-end gap-2">
-          <span className="text-sm">{(volume * 100).toFixed(0)}%</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--colorLight)]"
-          />
-        </div>
-        {/* Placeholder for mobile to keep center alignment */}
-        <div className="flex-1 sm:hidden"></div>
+        <span>{new Date(currentSong.length * 1000).toISOString().substr(14, 5)}</span>
       </div>
     </div>
   );
 };
 
 PlayerControls.propTypes = {
-  selectedSong: PropTypes.object,
-  colorText: PropTypes.string,
-  URL_BASE: PropTypes.string.isRequired,
-  folder: PropTypes.string,
-  setPreviousSong: PropTypes.func.isRequired,
-  setEndSong: PropTypes.func.isRequired,
-  volume: PropTypes.number.isRequired,
-  setVolume: PropTypes.func.isRequired,
+  currentSong: PropTypes.object,
+  isPlaying: PropTypes.bool.isRequired,
+  onTogglePlayPause: PropTypes.func.isRequired,
+  onSkipBack: PropTypes.func.isRequired,
+  onSkipForward: PropTypes.func.isRequired,
   seek: PropTypes.number.isRequired,
-  setSeek: PropTypes.func.isRequired,
   handleSeek: PropTypes.func.isRequired,
-  userSeek: PropTypes.number,
   random: PropTypes.bool.isRequired,
   setRandom: PropTypes.func.isRequired,
+  accentColor: PropTypes.string,
 };
 
 export default PlayerControls;
