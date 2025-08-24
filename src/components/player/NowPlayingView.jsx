@@ -85,7 +85,7 @@ const NowPlayingView = ({
       </header>
 
       <main className="flex-grow flex flex-col items-center justify-center gap-4 overflow-hidden text-center -mt-8">
-        <div className="flex-shrink-0 mt-2 px-6">
+        <div className="flex-shrink-0 mt-2 px-8">
           <img
             src={image}
             alt="cover"
@@ -94,7 +94,9 @@ const NowPlayingView = ({
           />
         </div>
         <div className="w-full px-4">
-          <MarqueeText text={currentSong.title} className="text-2xl font-bold" />
+          <div className="px-4">
+            <MarqueeText text={currentSong.title} className="text-2xl font-bold" />
+          </div>
           <h3 className="text-lg opacity-80 truncate">{currentSong.artist}</h3>
           {playlistName && <p className="text-xs opacity-60 mt-1 truncate">Playlist: {playlistName}</p>}
         </div>
