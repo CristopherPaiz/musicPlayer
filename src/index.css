@@ -60,3 +60,25 @@ input[type="range"]::-webkit-slider-thumb {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+@keyframes marquee-with-pause {
+  /* --- FASE DE PAUSA (dura 25% del tiempo total) --- */
+  0% {
+    transform: translateX(0%);
+  }
+  25% {
+    transform: translateX(0%); /* Mantenemos la posición por 5 segundos */
+  }
+  /* --- FASE DE SCROLL (dura 75% del tiempo total) --- */
+  90% {
+    transform: translateX(-100%); /* Hacemos el scroll */
+  }
+  /* --- RESET (asegura que el loop sea limpio) --- */
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  /* La duración total será de 20s (5s de pausa + 15s de scroll) */
+  animation: marquee-with-pause 20s linear infinite;
+}

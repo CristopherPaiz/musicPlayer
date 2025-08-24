@@ -1,5 +1,5 @@
 const FRAGMENT_DURATION = 10;
-const PRELOAD_AHEAD = 3;
+const PRELOAD_AHEAD = 5;
 
 export class AudioPlayer {
   constructor({ song, songUrl, totalFragments, onStateChange, onSeekUpdate, onSongEnd, onPreviousSong, onNextSong }) {
@@ -24,24 +24,40 @@ export class AudioPlayer {
     this.fragmentStartTime = 0;
     this.pausedTime = 0;
     this.pendingFragments = new Set();
-    this.mediaMetadataSet = false;
+    this.wakeLock = null;
 
-    this.worker = new Worker(new URL("./audio-worker.js", import.meta.url), { type: "module" });
+    this.worker = new Worker("/audio-worker.js");
     this.worker.onmessage = this._handleWorkerMessage.bind(this);
 
     this._setupMediaSessionHandlers();
   }
 
+  async _acquireWakeLock() {
+    if ("wakeLock" in navigator) {
+      try {
+        this.wakeLock = await navigator.wakeLock.request("screen");
+      } catch (err) {
+        console.error(`[WakeLock] Falló la adquisición: ${err.name}, ${err.message}`);
+      }
+    }
+  }
+
+  _releaseWakeLock() {
+    if (this.wakeLock !== null) {
+      this.wakeLock.release().then(() => {
+        this.wakeLock = null;
+      });
+    }
+  }
+
   _handleWorkerMessage(event) {
     const { status, index, arrayBuffer, error } = event.data;
     this.pendingFragments.delete(index);
-
     if (status === "success") {
       this.audioContext
         .decodeAudioData(arrayBuffer)
         .then((audioBuffer) => {
           this.bufferCache.set(index, audioBuffer);
-          console.log(`[AudioPlayer] Fragmento ${index} decodificado y cacheado.`);
           this._managePreloadBuffer();
         })
         .catch((e) => console.error(`[AudioPlayer] Error decodificando fragmento ${index}:`, e));
@@ -60,19 +76,16 @@ export class AudioPlayer {
   }
 
   _updateMediaSession() {
-    if ("mediaSession" in navigator) {
-      if (!this.mediaMetadataSet && this.song) {
-        navigator.mediaSession.metadata = new window.MediaMetadata({
-          title: this.song.title,
-          artist: this.song.artist,
-          album: this.song.album,
-          artwork: [{ src: `${this.songUrl}/cover.webp`, sizes: "512x512", type: "image/webp" }],
-        });
-        this.mediaMetadataSet = true;
-        console.log("[MediaSession] Metadatos actualizados para:", this.song.title);
-      }
-      navigator.mediaSession.playbackState = this.playbackState;
+    if (!("mediaSession" in navigator) || !this.song) {
+      return;
     }
+    navigator.mediaSession.metadata = new window.MediaMetadata({
+      title: this.song.title,
+      artist: this.song.artist,
+      album: this.song.album,
+      artwork: [{ src: `${this.songUrl}/cover.webp`, sizes: "512x512", type: "image/webp" }],
+    });
+    navigator.mediaSession.playbackState = this.playbackState;
   }
 
   _requestFragment(index) {
@@ -80,7 +93,6 @@ export class AudioPlayer {
       return;
     }
     this.pendingFragments.add(index);
-    console.log(`[AudioPlayer] Solicitando al Worker la descarga del fragmento ${index}...`);
     this.worker.postMessage({ type: "load", url: `${this.songUrl}/${index}.mp3`, index });
   }
 
@@ -93,7 +105,6 @@ export class AudioPlayer {
 
   async _getBuffer(index) {
     while (!this.bufferCache.has(index)) {
-      console.warn(`[AudioPlayer] Esperando por el fragmento ${index}...`);
       this._requestFragment(index);
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
@@ -104,18 +115,14 @@ export class AudioPlayer {
     if (this.audioContext.state === "closed") return;
 
     this.currentFragmentIndex = index;
-
     if (index > this.totalFragments) {
-      console.log("[AudioPlayer] Fin de la canción alcanzado.");
       this.onSongEnd();
       return;
     }
 
     this._managePreloadBuffer();
-
     const buffer = await this._getBuffer(index);
     if (!buffer) {
-      console.error(`[AudioPlayer] Reproducción detenida. No se pudo obtener el fragmento ${index}.`);
       this.pause();
       return;
     }
@@ -128,19 +135,13 @@ export class AudioPlayer {
     this.sourceNode = this.audioContext.createBufferSource();
     this.sourceNode.buffer = buffer;
     this.sourceNode.connect(this.gainNode);
-
     this.sourceNode.onended = () => {
       if (this.playbackState === "playing") {
         this._playFragment(this.currentFragmentIndex + 1);
       }
     };
-
     this.sourceNode.start(0, offset);
     this.fragmentStartTime = this.audioContext.currentTime - offset;
-    this.playbackState = "playing";
-    this.onStateChange("playing");
-    this._startSeekUpdater();
-    this._updateMediaSession();
   }
 
   _startSeekUpdater() {
@@ -150,13 +151,7 @@ export class AudioPlayer {
         const baseTime = (this.currentFragmentIndex - 1) * FRAGMENT_DURATION;
         const elapsedInFragment = this.audioContext.currentTime - this.fragmentStartTime;
         const currentTime = baseTime + elapsedInFragment;
-
-        if (currentTime >= this.song.length) {
-          this.onSeekUpdate(this.song.length);
-        } else {
-          this.onSeekUpdate(currentTime);
-        }
-
+        this.onSeekUpdate(Math.min(currentTime, this.song.length));
         this.seekUpdateTimer = requestAnimationFrame(update);
       }
     };
@@ -165,7 +160,14 @@ export class AudioPlayer {
 
   play() {
     if (this.playbackState === "playing") return;
-    this.audioContext.resume();
+    if (this.audioContext.state === "suspended") {
+      this.audioContext.resume();
+    }
+    this.playbackState = "playing";
+    this.onStateChange("playing");
+    this._updateMediaSession();
+    this._acquireWakeLock();
+    this._startSeekUpdater();
     const resumeFragment = Math.floor(this.pausedTime / FRAGMENT_DURATION) + 1;
     const resumeOffset = this.pausedTime % FRAGMENT_DURATION;
     this._playFragment(resumeFragment, resumeOffset);
@@ -173,6 +175,10 @@ export class AudioPlayer {
 
   pause() {
     if (this.playbackState === "paused" || !this.sourceNode) return;
+    this.playbackState = "paused";
+    this.onStateChange("paused");
+    this._updateMediaSession();
+    this._releaseWakeLock();
     cancelAnimationFrame(this.seekUpdateTimer);
     const baseTime = (this.currentFragmentIndex - 1) * FRAGMENT_DURATION;
     const elapsedInFragment = this.audioContext.currentTime - this.fragmentStartTime;
@@ -180,23 +186,16 @@ export class AudioPlayer {
     this.sourceNode.onended = null;
     this.sourceNode.stop();
     this.sourceNode = null;
-    this.playbackState = "paused";
-    this.onStateChange("paused");
-    this._updateMediaSession();
   }
 
   seek(time) {
-    console.log(`[AudioPlayer] Seek solicitado a ${time.toFixed(2)}s.`);
     this.worker.postMessage({ type: "cancel" });
     this.pendingFragments.clear();
     this.bufferCache.clear();
-
     const wasPlaying = this.playbackState === "playing";
-    this.pause();
+    if (wasPlaying) this.pause();
     this.pausedTime = time;
-    if (wasPlaying) {
-      this.play();
-    }
+    if (wasPlaying) this.play();
   }
 
   setVolume(volume) {

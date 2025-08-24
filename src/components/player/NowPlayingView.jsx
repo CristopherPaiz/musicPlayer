@@ -4,6 +4,7 @@ import Lyrics from "../Lyrics";
 import PlayerControls from "./PlayerControls";
 import BottomNav from "./BottomNav";
 import VerticalVolumeSlider from "./VerticalVolumeSlider";
+import MarqueeText from "../MarqueeText";
 
 const DesktopNowPlayingContent = ({ currentSong, image, lyrics, seek, colors, onClose }) => (
   <div className="h-full w-full flex flex-col bg-[var(--background-color)] p-8 overflow-hidden">
@@ -93,9 +94,9 @@ const NowPlayingView = ({
           />
         </div>
         <div className="w-full px-4">
-          <h2 className="text-2xl font-bold truncate">{currentSong.title}</h2>
+          <MarqueeText text={currentSong.title} className="text-2xl font-bold" />
           <h3 className="text-lg opacity-80 truncate">{currentSong.artist}</h3>
-          {playlistName && <p className="text-xs opacity-60 mt-1 truncate">De la playlist: {playlistName}</p>}
+          {playlistName && <p className="text-xs opacity-60 mt-1 truncate">Playlist: {playlistName}</p>}
         </div>
         <button onClick={() => setShowLyricsMobile(true)} className="bg-white/10 px-4 py-2 rounded-full text-sm mt-2">
           Mostrar Letra
