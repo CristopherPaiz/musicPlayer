@@ -112,12 +112,12 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
   }
 
   return (
-    <div className="h-dvh w-full flex flex-col items-center gap-4">
+    <div className="h-full w-full flex flex-col items-center gap-4">
       <div
         ref={scrollContainerRef}
         onWheel={handleUserScroll}
         onTouchMove={handleUserScroll}
-        className="h-dvh w-full overflow-y-auto scroll-smooth no-scrollbar p-8 text-left"
+        className="h-full w-full overflow-y-auto scroll-smooth no-scrollbar p-8 text-left"
       >
         {type === lyricType.SYNCED ? (
           parsedLyrics.map((line, index) => {
