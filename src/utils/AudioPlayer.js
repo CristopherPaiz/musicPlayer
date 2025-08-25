@@ -34,6 +34,8 @@ export class AudioPlayer {
     this.worker.onmessage = this._handleWorkerMessage.bind(this);
 
     this._setupMediaSessionHandlers();
+    // Actualizamos la metadata tan pronto se crea la instancia
+    this._updateMediaSession();
   }
 
   async _acquireWakeLock() {
@@ -76,7 +78,6 @@ export class AudioPlayer {
         .catch((e) => console.error(`[AudioPlayer] Error decodificando fragmento ${index}:`, e));
     } else {
       console.error(`[Worker] Falló la descarga del fragmento ${index}:`, error);
-      // Podríamos reintentar la descarga aquí si es necesario
     }
   }
 
@@ -86,6 +87,9 @@ export class AudioPlayer {
       navigator.mediaSession.setActionHandler("pause", () => this.pause());
       navigator.mediaSession.setActionHandler("previoustrack", () => this.onPreviousSong());
       navigator.mediaSession.setActionHandler("nexttrack", () => this.onNextSong());
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        this.seek(details.seekTime);
+      });
     }
   }
 
@@ -97,9 +101,19 @@ export class AudioPlayer {
       title: this.song.title,
       artist: this.song.artist,
       album: this.song.album,
-      artwork: [{ src: `${this.songUrl}/cover.webp`, sizes: "512x512", type: "image/webp" }],
+      artwork: [{ src: this.song.coverUrl, sizes: "512x512", type: "image/webp" }],
     });
     navigator.mediaSession.playbackState = this.playbackState;
+  }
+
+  _updatePositionState(currentTime) {
+    if ("mediaSession" in navigator && navigator.mediaSession.metadata) {
+      navigator.mediaSession.setPositionState({
+        duration: parseFloat(this.song.length) || 0,
+        playbackRate: 1,
+        position: currentTime,
+      });
+    }
   }
 
   _requestFragment(index) {
@@ -117,7 +131,7 @@ export class AudioPlayer {
   }
 
   _managePreloadBuffer() {
-    if (this.priorityFragment !== null) return; // No pre-cargar si hay un fragmento prioritario
+    if (this.priorityFragment !== null) return;
     for (let i = 1; i <= PRELOAD_AHEAD; i++) {
       const preloadIndex = this.currentFragmentIndex + i;
       this._requestFragment(preloadIndex);
@@ -174,8 +188,9 @@ export class AudioPlayer {
       if (this.playbackState === "playing" && this.isReadyToPlay) {
         const baseTime = (this.currentFragmentIndex - 1) * FRAGMENT_DURATION;
         const elapsedInFragment = this.audioContext.currentTime - this.fragmentStartTime;
-        const currentTime = baseTime + elapsedInFragment;
-        this.onSeekUpdate(Math.min(currentTime, this.song.length));
+        const currentTime = Math.min(baseTime + elapsedInFragment, this.song.length);
+        this.onSeekUpdate(currentTime);
+        this._updatePositionState(currentTime);
       }
       this.seekUpdateTimer = requestAnimationFrame(update);
     };
@@ -227,6 +242,7 @@ export class AudioPlayer {
       this.sourceNode.onended = null;
       this.sourceNode.stop();
       this.sourceNode = null;
+      this._updatePositionState(this.pausedTime);
     }
   }
 
@@ -238,11 +254,11 @@ export class AudioPlayer {
     if (wasPlaying) this.pause();
 
     this.pausedTime = time;
-    this.onSeekUpdate(time); // Actualiza la UI inmediatamente
+    this.onSeekUpdate(time);
+    this._updatePositionState(time);
 
     const fragmentToSeek = Math.floor(time / FRAGMENT_DURATION) + 1;
 
-    // Limpiar caché excepto los fragmentos ya descargados alrededor del punto de seek
     const currentBuffers = Array.from(this.bufferCache.keys());
     for (const key of currentBuffers) {
       if (Math.abs(key - fragmentToSeek) > PRELOAD_AHEAD) {
