@@ -167,7 +167,6 @@ const Home = () => {
       return;
     }
 
-    // Al cambiar de canción, reseteamos la posición
     setUserSeek(0);
     setSeek(0);
     setCurrentSong(song);
@@ -181,8 +180,8 @@ const Home = () => {
         const shuffled = otherSongs.sort(() => Math.random() - 0.5);
         setQueue([song, ...shuffled]);
       } else {
-        const songIndex = sourcePlaylist.findIndex((s) => s.id === song.id);
-        setQueue(sourcePlaylist.slice(songIndex));
+        // La cola es siempre la playlist completa en su orden original
+        setQueue(sourcePlaylist);
       }
     }
   };
@@ -198,12 +197,13 @@ const Home = () => {
     if (sourceList.length === 0) return;
 
     if (isRandom) {
+      // MODO ALEATORIO: Canción actual al principio, el resto barajado.
       const otherSongs = sourceList.filter((s) => s.id !== currentSong.id);
       const shuffled = otherSongs.sort(() => Math.random() - 0.5);
       setQueue([currentSong, ...shuffled]);
     } else {
-      const songIndex = sourceList.findIndex((s) => s.id === currentSong.id);
-      setQueue(sourceList.slice(songIndex));
+      // MODO NORMAL: La cola vuelve a ser la playlist original completa.
+      setQueue(sourceList);
     }
   };
 
