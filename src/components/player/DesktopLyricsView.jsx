@@ -1,11 +1,11 @@
 import PropTypes from "prop-types";
 import Lyrics from "../Lyrics";
 
-const DesktopLyricsView = ({ currentSong, image, lyrics, seek, colors }) => {
+const DesktopLyricsView = ({ currentSong, image, lyrics, seek, colors, onSeek }) => {
   if (!currentSong) return null;
 
   return (
-    <div className="h-dvh w-full flex gap-8 p-8 overflow-hidden">
+    <div className="h-full w-full flex gap-8 p-8 overflow-hidden">
       <div className="w-1/3 flex-shrink-0">
         {image && <img src={image} alt="cover" className="w-full rounded-lg shadow-2xl aspect-square object-cover" />}
       </div>
@@ -15,7 +15,7 @@ const DesktopLyricsView = ({ currentSong, image, lyrics, seek, colors }) => {
           <h3 className="text-xl opacity-80 truncate">{currentSong.artist}</h3>
         </div>
         <div className="flex-grow overflow-hidden">
-          <Lyrics lyrics={lyrics} timeElapsed={seek} color={colors.textLight} darkColor={colors.text} />
+          <Lyrics lyrics={lyrics} timeElapsed={seek} color={colors.textLight} darkColor={colors.text} onSeek={onSeek} />
         </div>
       </div>
     </div>
@@ -28,6 +28,7 @@ DesktopLyricsView.propTypes = {
   lyrics: PropTypes.string,
   seek: PropTypes.number.isRequired,
   colors: PropTypes.object.isRequired,
+  onSeek: PropTypes.func.isRequired,
 };
 
 export default DesktopLyricsView;

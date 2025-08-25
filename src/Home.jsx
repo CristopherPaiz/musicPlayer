@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, useCallback } from "react";
+import { useState, useEffect, lazy, Suspense, useCallback, useMemo } from "react";
 import { FastAverageColor } from "fast-average-color";
 import Drawer from "react-modern-drawer";
 import "react-modern-drawer/dist/index.css";
@@ -43,6 +43,69 @@ const Home = () => {
   const [isNowPlayingOpenMobile, setNowPlayingOpenMobile] = useState(false);
   const [mainDesktopView, setMainDesktopView] = useState("list");
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchHistory, setSearchHistory] = useState([]);
+
+  // Cargar estado desde localStorage al iniciar
+  useEffect(() => {
+    try {
+      const savedVolume = localStorage.getItem("playerVolume");
+      if (savedVolume !== null) setVolume(JSON.parse(savedVolume));
+
+      const savedQueue = localStorage.getItem("songQueue");
+      if (savedQueue) setQueue(JSON.parse(savedQueue));
+
+      const savedSongState = localStorage.getItem("currentSongState");
+      if (savedSongState) {
+        const { song, time } = JSON.parse(savedSongState);
+        if (song) {
+          setCurrentSong(song);
+          setUserSeek(time); // Inicia la canción en la posición guardada
+        }
+      }
+
+      const savedHistory = localStorage.getItem("searchHistory");
+      if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
+    } catch (error) {
+      console.error("Error al cargar estado desde localStorage", error);
+    }
+  }, []);
+
+  // Guardar estado en localStorage
+  useEffect(() => {
+    localStorage.setItem("playerVolume", JSON.stringify(volume));
+  }, [volume]);
+
+  useEffect(() => {
+    localStorage.setItem("songQueue", JSON.stringify(queue));
+  }, [queue]);
+
+  useEffect(() => {
+    if (currentSong && seek > 0) {
+      // Solo guarda si hay una canción y ha empezado a sonar
+      const stateToSave = { song: currentSong, time: seek };
+      localStorage.setItem("currentSongState", JSON.stringify(stateToSave));
+    }
+  }, [currentSong, seek]);
+
+  useEffect(() => {
+    localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+  }, [searchHistory]);
+
+  // Interceptar botón "atrás"
+  useEffect(() => {
+    const handlePopState = (e) => {
+      e.preventDefault();
+      window.history.pushState(null, "", "/");
+      setSelectedPlaylist(null);
+      setNowPlayingOpenMobile(false);
+      setMainDesktopView("list");
+    };
+    window.history.pushState(null, "", "/");
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   useEffect(() => {
     const fetchPlaylists = async () => {
       try {
@@ -70,6 +133,7 @@ const Home = () => {
       setSelectedPlaylist(playlist);
       setPlaylistSongs([]);
       setIsLoading(true);
+      setSearchTerm("");
 
       if (playlistCache[playlist.id]) {
         setPlaylistSongs(playlistCache[playlist.id]);
@@ -103,6 +167,9 @@ const Home = () => {
       return;
     }
 
+    // Al cambiar de canción, reseteamos la posición
+    setUserSeek(0);
+    setSeek(0);
     setCurrentSong(song);
     setIsPlaying(true);
     setMainDesktopView("lyrics");
@@ -114,7 +181,8 @@ const Home = () => {
         const shuffled = otherSongs.sort(() => Math.random() - 0.5);
         setQueue([song, ...shuffled]);
       } else {
-        setQueue(sourcePlaylist);
+        const songIndex = sourcePlaylist.findIndex((s) => s.id === song.id);
+        setQueue(sourcePlaylist.slice(songIndex));
       }
     }
   };
@@ -134,33 +202,31 @@ const Home = () => {
       const shuffled = otherSongs.sort(() => Math.random() - 0.5);
       setQueue([currentSong, ...shuffled]);
     } else {
-      setQueue(sourceList);
+      const songIndex = sourceList.findIndex((s) => s.id === currentSong.id);
+      setQueue(sourceList.slice(songIndex));
     }
   };
 
   const skipSong = useCallback(
     (direction) => {
       if (!currentSong || !queue || queue.length === 0) return;
-
       const currentIndex = queue.findIndex((s) => s.id === currentSong.id);
-
       if (currentIndex === -1) return;
 
-      let nextSong = null;
-
+      let nextIndex = -1;
       if (direction === "forward") {
-        if (currentIndex < queue.length - 1) {
-          nextSong = queue[currentIndex + 1];
-        }
+        nextIndex = currentIndex + 1;
       } else {
-        if (currentIndex > 0) {
-          nextSong = queue[currentIndex - 1];
-        }
+        nextIndex = currentIndex - 1;
       }
 
-      if (nextSong) {
-        setCurrentSong(nextSong);
+      if (nextIndex >= 0 && nextIndex < queue.length) {
+        setUserSeek(0);
+        setSeek(0);
+        setCurrentSong(queue[nextIndex]);
         setIsPlaying(true);
+      } else if (direction === "forward") {
+        setIsPlaying(false);
       }
     },
     [currentSong, queue]
@@ -168,9 +234,7 @@ const Home = () => {
 
   const handleSkipBack = useCallback(() => {
     if (!currentSong) return;
-
     if (seek > 5) {
-      setSeek(0);
       setUserSeek(0);
     } else {
       skipSong("backward");
@@ -183,7 +247,6 @@ const Home = () => {
       return;
     }
     setLyrics(null);
-    setSeek(0);
 
     const fetchSongData = async () => {
       try {
@@ -253,6 +316,19 @@ const Home = () => {
     setIsPlaying((prev) => !prev);
   }, [currentSong]);
 
+  const handleAddToSearchHistory = (term) => {
+    if (!term) return;
+    const newHistory = [term, ...searchHistory.filter((item) => item !== term)].slice(0, 10);
+    setSearchHistory(newHistory);
+  };
+
+  const filteredSongs = useMemo(() => {
+    if (!searchTerm) return playlistSongs;
+    return playlistSongs.filter(
+      (song) => song.title.toLowerCase().includes(searchTerm.toLowerCase()) || song.artist.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, playlistSongs]);
+
   const commonPlayerProps = {
     currentSong,
     isPlaying,
@@ -318,7 +394,7 @@ const Home = () => {
               <Suspense fallback={<SongListSkeleton count={15} />}>
                 <PlaylistView
                   playlistData={selectedPlaylist}
-                  songs={playlistSongs}
+                  songs={filteredSongs}
                   queue={queue}
                   isLoading={isLoading}
                   onSelectSong={handleSelectSong}
@@ -328,7 +404,11 @@ const Home = () => {
                   imageCache={imageCache}
                   setImageCache={setImageCache}
                   desktopView={mainDesktopView}
-                  desktopLyricsProps={{ currentSong, image: currentImage, lyrics, seek, colors }}
+                  desktopLyricsProps={{ currentSong, image: currentImage, lyrics, seek, colors, onSeek: setUserSeek }}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  searchHistory={searchHistory}
+                  onSearchSubmit={handleAddToSearchHistory}
                 />
               </Suspense>
             ) : (
@@ -402,6 +482,7 @@ const Home = () => {
                 playlistName={selectedPlaylist?.name}
                 onPlaylistClick={() => setPlaylistDrawerOpen(true)}
                 onQueueClick={() => setQueueDrawerOpen(true)}
+                onSeek={setUserSeek}
                 {...commonPlayerProps}
               />
             </div>

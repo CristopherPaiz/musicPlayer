@@ -4,6 +4,7 @@ import SongList from "./components/player/SongList";
 import QueuePanel from "./components/player/QueuePanel";
 import SongListSkeleton from "./components/skeletons/SongListSkeleton";
 import DesktopLyricsView from "./components/player/DesktopLyricsView";
+import SearchBar from "./components/player/SearchBar";
 
 const PlaylistView = ({
   playlistData,
@@ -18,19 +19,45 @@ const PlaylistView = ({
   setImageCache,
   desktopView,
   desktopLyricsProps,
+  searchTerm,
+  setSearchTerm,
+  searchHistory,
+  onSearchSubmit,
 }) => {
+  const handleSearch = (e) => {
+    e.preventDefault();
+    onSearchSubmit(searchTerm);
+  };
+
   return (
     <div className="h-dvh flex flex-col" style={{ backgroundColor: colors.dark, color: colors.text }}>
       <div className="flex-grow flex overflow-hidden">
         <main className="flex-grow flex flex-col overflow-hidden">
-          <PlaylistHeader playlistData={playlistData} color={colors.hex} colorDark={colors.dark} colorText={colors.text} />
+          <div className="flex-shrink-0">
+            <PlaylistHeader playlistData={playlistData} color={colors.hex} colorDark={colors.dark} colorText={colors.text} />
+            <div className="px-4 pt-4">
+              <form onSubmit={handleSearch}>
+                <SearchBar
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  searchHistory={searchHistory}
+                  onHistorySelect={(term) => {
+                    setSearchTerm(term);
+                    onSearchSubmit(term);
+                  }}
+                />
+              </form>
+            </div>
+          </div>
 
           <div className="flex-grow overflow-y-auto pb-36 sm:pb-0">
-            {isLoading || songs.length === 0 ? (
+            {isLoading ? (
               <SongListSkeleton />
+            ) : songs.length === 0 && searchTerm ? (
+              <p className="text-center text-white/60 mt-8">No se encontraron resultados para &quot;{searchTerm}&quot;</p>
             ) : (
               <>
-                <div className="hidden sm:block h-dvh">
+                <div className="hidden sm:block h-full">
                   {desktopView === "lyrics" ? (
                     <DesktopLyricsView {...desktopLyricsProps} />
                   ) : (
@@ -44,7 +71,7 @@ const PlaylistView = ({
                     />
                   )}
                 </div>
-                <div className="sm:hidden h-dvh">
+                <div className="sm:hidden h-full">
                   <SongList
                     songs={songs}
                     onSelectSong={(song) => onSelectSong(song, false)}
@@ -79,6 +106,10 @@ PlaylistView.propTypes = {
   setImageCache: PropTypes.func.isRequired,
   desktopView: PropTypes.string,
   desktopLyricsProps: PropTypes.object,
+  searchTerm: PropTypes.string.isRequired,
+  setSearchTerm: PropTypes.func.isRequired,
+  searchHistory: PropTypes.array.isRequired,
+  onSearchSubmit: PropTypes.func.isRequired,
 };
 
 export default PlaylistView;

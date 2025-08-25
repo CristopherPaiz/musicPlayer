@@ -29,7 +29,7 @@ const PlayerControls = ({
         <input
           type="range"
           min="0"
-          max={Math.floor(currentSong.length)}
+          max={currentSong.length ? Math.floor(currentSong.length) : 100}
           value={seek}
           onChange={handleSeek}
           className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"

@@ -6,7 +6,7 @@ import BottomNav from "./BottomNav";
 import VerticalVolumeSlider from "./VerticalVolumeSlider";
 import MarqueeText from "../MarqueeText";
 
-const DesktopNowPlayingContent = ({ currentSong, image, lyrics, seek, colors, onClose }) => (
+const DesktopNowPlayingContent = ({ currentSong, image, lyrics, seek, colors, onClose, onSeek }) => (
   <div className="h-dvh w-full flex flex-col bg-[var(--background-color)] p-8 overflow-hidden">
     <header className="flex-shrink-0 mb-8">
       <button onClick={onClose} className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
@@ -26,7 +26,7 @@ const DesktopNowPlayingContent = ({ currentSong, image, lyrics, seek, colors, on
           <h3 className="text-xl opacity-80 truncate">{currentSong.artist}</h3>
         </div>
         <div className="flex-grow overflow-hidden">
-          <Lyrics lyrics={lyrics} timeElapsed={seek} color={colors.textLight} darkColor={colors.text} />
+          <Lyrics lyrics={lyrics} timeElapsed={seek} color={colors.textLight} darkColor={colors.text} onSeek={onSeek} />
         </div>
       </div>
     </main>
@@ -46,6 +46,7 @@ const NowPlayingView = ({
   playlistName,
   onPlaylistClick,
   onQueueClick,
+  onSeek,
   ...controlProps
 }) => {
   const [showLyricsMobile, setShowLyricsMobile] = useState(false);
@@ -68,10 +69,22 @@ const NowPlayingView = ({
     };
   }, [showVolumeControl]);
 
+  // Controlar pull-to-refresh
+  useEffect(() => {
+    if (showVolumeControl) {
+      document.body.style.overscrollBehavior = "contain";
+    } else {
+      document.body.style.overscrollBehavior = "auto";
+    }
+    return () => {
+      document.body.style.overscrollBehavior = "auto";
+    };
+  }, [showVolumeControl]);
+
   if (!currentSong) return null;
 
   if (isDesktopView) {
-    return <DesktopNowPlayingContent {...{ currentSong, image, lyrics, seek, colors, onClose }} />;
+    return <DesktopNowPlayingContent {...{ currentSong, image, lyrics, seek, colors, onClose, onSeek }} />;
   }
 
   return (
@@ -132,7 +145,7 @@ const NowPlayingView = ({
             </button>
           </header>
           <div className="flex-grow overflow-hidden pt-4">
-            <Lyrics lyrics={lyrics} timeElapsed={seek} color={colors.textLight} darkColor={colors.text} />
+            <Lyrics lyrics={lyrics} timeElapsed={seek} color={colors.textLight} darkColor={colors.text} onSeek={onSeek} />
           </div>
         </div>
       )}
@@ -147,6 +160,7 @@ DesktopNowPlayingContent.propTypes = {
   seek: PropTypes.number.isRequired,
   colors: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
+  onSeek: PropTypes.func.isRequired,
 };
 
 NowPlayingView.propTypes = {
@@ -162,6 +176,7 @@ NowPlayingView.propTypes = {
   playlistName: PropTypes.string,
   onPlaylistClick: PropTypes.func,
   onQueueClick: PropTypes.func,
+  onSeek: PropTypes.func.isRequired,
 };
 
 export default NowPlayingView;

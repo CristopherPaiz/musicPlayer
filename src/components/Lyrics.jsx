@@ -32,7 +32,7 @@ const parseLyrics = (lyrics) => {
   return { type: lyricType.SYNCED, lines: parsed };
 };
 
-const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
+const Lyrics = ({ lyrics, timeElapsed, color, darkColor, onSeek }) => {
   const { type, lines: parsedLyrics } = useMemo(() => parseLyrics(lyrics), [lyrics]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [longPauseInfo, setLongPauseInfo] = useState({ active: false, duration: 0, key: -1 });
@@ -105,7 +105,7 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
 
   if (type === lyricType.NONE) {
     return (
-      <div className="flex items-center justify-center h-dvh pb-24 w-full text-white/50">
+      <div className="flex items-center justify-center h-full w-full text-white/50">
         <p>Letra no disponible</p>
       </div>
     );
@@ -126,7 +126,8 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
             return (
               <div key={index} ref={isCurrent ? currentLineRef : null}>
                 <p
-                  className={`transition-all duration-300 py-[2px] text-balance ${fontSize} ${
+                  onClick={() => onSeek(line.time)}
+                  className={`transition-all duration-300 py-[2px] text-balance cursor-pointer ${fontSize} ${
                     isCurrent ? `font-bold opacity-100` : `font-semibold opacity-50`
                   }`}
                   style={{ color: isCurrent ? color : darkColor }}
@@ -192,6 +193,7 @@ Lyrics.propTypes = {
   timeElapsed: PropTypes.number.isRequired,
   color: PropTypes.string,
   darkColor: PropTypes.string,
+  onSeek: PropTypes.func.isRequired,
 };
 
 Lyrics.defaultProps = {
