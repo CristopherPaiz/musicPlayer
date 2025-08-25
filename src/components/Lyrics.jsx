@@ -138,7 +138,7 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
                     <div className="w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
                       <div
                         key={longPauseInfo.key}
-                        className="h-dvh bg-white/60 rounded-full lyrics-progress-bar"
+                        className="h-full bg-white/60 rounded-full lyrics-progress-bar"
                         style={{ animationDuration: `${longPauseInfo.duration}s` }}
                       />
                     </div>
