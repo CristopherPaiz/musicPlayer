@@ -46,7 +46,7 @@ const VerticalVolumeSlider = ({ volume, setVolume }) => {
       onMouseDown={handleInteractionStart}
       onTouchStart={handleInteractionStart}
     >
-      <div className="relative w-1 h-full bg-white/20 rounded-full">
+      <div className="relative w-1 h-dvh bg-white/20 rounded-full">
         <div className="absolute bottom-0 w-full bg-white rounded-full" style={{ height: `${volume * 100}%` }}>
           <div className="absolute left-1/2 -translate-x-1/2 -top-1 size-3 bg-white rounded-full"></div>
         </div>

@@ -105,19 +105,19 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
 
   if (type === lyricType.NONE) {
     return (
-      <div className="flex items-center justify-center h-full pb-24 w-full text-white/50">
+      <div className="flex items-center justify-center h-dvh pb-24 w-full text-white/50">
         <p>Letra no disponible</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full flex flex-col items-center gap-4">
+    <div className="h-dvh w-full flex flex-col items-center gap-4">
       <div
         ref={scrollContainerRef}
         onWheel={handleUserScroll}
         onTouchMove={handleUserScroll}
-        className="h-full w-full overflow-y-auto scroll-smooth no-scrollbar p-8 text-left"
+        className="h-dvh w-full overflow-y-auto scroll-smooth no-scrollbar p-8 text-left"
       >
         {type === lyricType.SYNCED ? (
           parsedLyrics.map((line, index) => {
@@ -138,7 +138,7 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor }) => {
                     <div className="w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
                       <div
                         key={longPauseInfo.key}
-                        className="h-full bg-white/60 rounded-full lyrics-progress-bar"
+                        className="h-dvh bg-white/60 rounded-full lyrics-progress-bar"
                         style={{ animationDuration: `${longPauseInfo.duration}s` }}
                       />
                     </div>

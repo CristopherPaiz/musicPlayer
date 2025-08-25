@@ -5,7 +5,7 @@ const DesktopLyricsView = ({ currentSong, image, lyrics, seek, colors }) => {
   if (!currentSong) return null;
 
   return (
-    <div className="h-full w-full flex gap-8 p-8 overflow-hidden">
+    <div className="h-dvh w-full flex gap-8 p-8 overflow-hidden">
       <div className="w-1/3 flex-shrink-0">
         {image && <img src={image} alt="cover" className="w-full rounded-lg shadow-2xl aspect-square object-cover" />}
       </div>

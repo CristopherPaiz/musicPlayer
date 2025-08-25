@@ -7,7 +7,7 @@ import VerticalVolumeSlider from "./VerticalVolumeSlider";
 import MarqueeText from "../MarqueeText";
 
 const DesktopNowPlayingContent = ({ currentSong, image, lyrics, seek, colors, onClose }) => (
-  <div className="h-full w-full flex flex-col bg-[var(--background-color)] p-8 overflow-hidden">
+  <div className="h-dvh w-full flex flex-col bg-[var(--background-color)] p-8 overflow-hidden">
     <header className="flex-shrink-0 mb-8">
       <button onClick={onClose} className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -20,7 +20,7 @@ const PlaylistView = ({
   desktopLyricsProps,
 }) => {
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: colors.dark, color: colors.text }}>
+    <div className="h-dvh flex flex-col" style={{ backgroundColor: colors.dark, color: colors.text }}>
       <div className="flex-grow flex overflow-hidden">
         <main className="flex-grow flex flex-col overflow-hidden">
           <PlaylistHeader playlistData={playlistData} color={colors.hex} colorDark={colors.dark} colorText={colors.text} />
@@ -30,7 +30,7 @@ const PlaylistView = ({
               <SongListSkeleton />
             ) : (
               <>
-                <div className="hidden sm:block h-full">
+                <div className="hidden sm:block h-dvh">
                   {desktopView === "lyrics" ? (
                     <DesktopLyricsView {...desktopLyricsProps} />
                   ) : (
@@ -44,7 +44,7 @@ const PlaylistView = ({
                     />
                   )}
                 </div>
-                <div className="sm:hidden h-full">
+                <div className="sm:hidden h-dvh">
                   <SongList
                     songs={songs}
                     onSelectSong={(song) => onSelectSong(song, false)}

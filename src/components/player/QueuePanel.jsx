@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 
 const QueuePanel = ({ songs, currentSong, onSelectSong, colors }) => {
   return (
-    <aside className="w-full h-full bg-black/20 flex flex-col overflow-hidden">
+    <aside className="w-full h-dvh bg-black/20 flex flex-col overflow-hidden">
       <div
         style={{ backgroundColor: colors.hex, filter: "brightness(0.90)", color: colors.text }}
         className="text-xl font-bold text-center py-4 sticky top-0 z-10 flex-shrink-0"

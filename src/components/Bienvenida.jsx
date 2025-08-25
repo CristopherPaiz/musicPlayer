@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 
 const Bienvenida = ({ playlists, onPlaylistSelect }) => {
   return (
-    <div className="w-full h-full flex flex-col bg-neutral-900 text-white">
+    <div className="w-full h-dvh flex flex-col bg-neutral-900 text-white">
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <div className="hidden sm:flex w-full items-center justify-center flex-col">
           <h1 className="text-6xl font-bold">Music Player</h1>

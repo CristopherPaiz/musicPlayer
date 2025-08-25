@@ -310,10 +310,10 @@ const Home = () => {
 
         <main className="flex-grow flex flex-col overflow-hidden relative transition-colors duration-500" style={{ backgroundColor: colors.dark }}>
           <div
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-full h-dvh"
             style={{ backgroundImage: `linear-gradient(to bottom, ${colors.hex}33 0%, ${colors.dark} 100%)` }}
           />
-          <div className="relative z-10 h-full overflow-hidden">
+          <div className="relative z-10 h-dvh overflow-hidden">
             {selectedPlaylist ? (
               <Suspense fallback={<SongListSkeleton count={15} />}>
                 <PlaylistView
@@ -413,7 +413,7 @@ const Home = () => {
             className="!w-64"
             style={{ backgroundColor: colors.dark }}
           >
-            <div className="p-4 h-full flex flex-col">
+            <div className="p-4 h-dvh flex flex-col">
               <h2 className="font-bold text-lg mb-4 flex-shrink-0">Playlists</h2>
               <nav className="flex-grow overflow-y-auto">
                 {playlists.map((plays) => (
