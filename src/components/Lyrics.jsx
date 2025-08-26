@@ -168,8 +168,8 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor, onSeek }) => {
             <div key={index} ref={isCurrent ? currentLineRef : (el) => lineRefs.current.set(index, el)}>
               <p
                 onClick={() => type === lyricType.SYNCED && onSeek(line.time)}
-                className={`transition-colors duration-300 py-[2px] text-balance ${type === lyricType.SYNCED ? "cursor-pointer" : ""} ${fontSize} ${
-                  isCurrent ? "font-bold" : "font-semibold"
+                className={`transition-colors duration-300 py-[2px] ${type === lyricType.SYNCED ? "cursor-pointer" : ""} ${fontSize} ${
+                  isCurrent ? "font-bold" : "font-normal line-clamp-2"
                 }`}
                 style={{ color: isCurrent ? color : darkColor }}
               >
