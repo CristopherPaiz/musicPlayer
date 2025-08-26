@@ -169,7 +169,7 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor, onSeek }) => {
               <p
                 onClick={() => type === lyricType.SYNCED && onSeek(line.time)}
                 className={`transition-colors duration-300 py-[2px] ${type === lyricType.SYNCED ? "cursor-pointer" : ""} ${fontSize} ${
-                  isCurrent ? "font-bold" : "font-normal line-clamp-2"
+                  isCurrent ? "font-bold" : "font-normal mt-1"
                 }`}
                 style={{ color: isCurrent ? color : darkColor }}
               >
@@ -218,19 +218,19 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor, onSeek }) => {
         )}
         <button
           onClick={() => handleFontSizeChange("text-sm")}
-          className={`px-3 py-1 rounded-full text-base ${fontSize === "text-sm" ? "bg-white text-black" : "text-white/70"}`}
+          className={`px-3 py-1 rounded-full text-base ${fontSize === "text-sm" ? "bg-white text-black" : "text-white"}`}
         >
           A
         </button>
         <button
           onClick={() => handleFontSizeChange("text-base")}
-          className={`px-3 py-1 rounded-full text-base ${fontSize === "text-base" ? "bg-white text-black" : "text-white/70"}`}
+          className={`px-3 py-1 rounded-full text-base ${fontSize === "text-base" ? "bg-white text-black" : "text-white"}`}
         >
           A
         </button>
         <button
           onClick={() => handleFontSizeChange("text-lg")}
-          className={`px-3 py-1 rounded-full text-lg ${fontSize === "text-lg" ? "bg-white text-black" : "text-white/70"}`}
+          className={`px-3 py-1 rounded-full text-lg ${fontSize === "text-lg" ? "bg-white text-black" : "text-white"}`}
         >
           A
         </button>
