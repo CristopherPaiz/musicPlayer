@@ -40,6 +40,7 @@ const Home = () => {
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [playlistSongs, setPlaylistSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPlaylistsLoading, setIsPlaylistsLoading] = useState(true);
   const [colors, setColors] = useState({ hex: "#1db954", dark: "#121212", light: "#282828", text: "#FFFFFF", textLight: "#FFFFFF" });
   const [isPlaylistDrawerOpen, setPlaylistDrawerOpen] = useState(false);
   const [isQueueDrawerOpen, setQueueDrawerOpen] = useState(false);
@@ -47,12 +48,10 @@ const Home = () => {
   const [mainDesktopView, setMainDesktopView] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // --- INICIO: LÓGICA PARA INTERCEPTAR EL BOTÓN "ATRÁS" ---
   useEffect(() => {
     const handlePopState = () => {
-      // Cuando el usuario presiona "atrás", el estado que empujamos se pierde.
-      // Esto nos indica que debemos volver a la pantalla de bienvenida.
       setSelectedPlaylist(null);
+      setMainDesktopView("list");
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -60,15 +59,20 @@ const Home = () => {
       window.removeEventListener("popstate", handlePopState);
     };
   }, []);
-  // --- FIN: LÓGICA PARA INTERCEPTAR EL BOTÓN "ATRÁS" ---
 
   useEffect(() => {
     const fetchPlaylists = async () => {
+      setIsPlaylistsLoading(true);
       try {
         const response = await fetch(`${API_URL}/api/playlists`);
+        if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         setPlaylists(data);
-      } catch (error) {}
+      } catch (error) {
+        console.error("Failed to fetch playlists:", error);
+      } finally {
+        setIsPlaylistsLoading(false);
+      }
     };
     fetchPlaylists();
   }, []);
@@ -82,11 +86,9 @@ const Home = () => {
         return;
       }
 
-      // --- INICIO: MANIPULACIÓN DEL HISTORIAL ---
-      // Empujamos un nuevo estado al historial del navegador. No cambia la URL,
-      // pero crea una "página" a la que el botón "atrás" puede volver.
-      window.history.pushState({ playlistId: playlist.id }, "", "/");
-      // --- FIN: MANIPULACIÓN DEL HISTORIAL ---
+      if (window.history.state?.playlistId !== playlist.id) {
+        window.history.pushState({ playlistId: playlist.id }, "", "/");
+      }
 
       setMainDesktopView("list");
       setSelectedPlaylist(playlist);
@@ -212,7 +214,7 @@ const Home = () => {
                 />
               </Suspense>
             ) : (
-              <Bienvenida playlists={playlists} onPlaylistSelect={selectPlaylist} />
+              <Bienvenida playlists={playlists} onPlaylistSelect={selectPlaylist} isLoading={isPlaylistsLoading} />
             )}
           </div>
         </main>
