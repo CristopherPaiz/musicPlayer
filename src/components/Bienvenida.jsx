@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 
 const Bienvenida = ({ playlists, onPlaylistSelect }) => {
   return (
-    <div className="w-full h-dvh flex flex-col bg-neutral-900 text-white overflow-auto">
+    <div className="w-full h-dvh flex flex-col bg-neutral-900 text-white overflow-auto pb-36 sm:pb-2">
       <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
         <div className="hidden sm:flex w-full items-center justify-center flex-col">
           <h1 className="text-6xl font-bold">Music Player</h1>

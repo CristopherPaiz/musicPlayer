@@ -13,6 +13,7 @@ import NowPlayingView from "./components/player/NowPlayingView";
 import QueuePanel from "./components/player/QueuePanel";
 import PlayerControls from "./components/player/PlayerControls";
 import VolumeIcon from "./components/icons/Volume";
+import { getHighContrastTextColor } from "./utils/colorUtils"; // <-- IMPORTAMOS LA NUEVA FUNCIÓN
 
 const PlaylistView = lazy(() => import("./PlaylistView"));
 const fac = new FastAverageColor();
@@ -97,14 +98,22 @@ const Home = () => {
     fac
       .getColorAsync(currentImage)
       .then((color) => {
+        const backgroundColor = color.isDark
+          ? `rgb(${color.value.map((c) => c * 0.7).join(",")})`
+          : `rgb(${color.value.map((c) => c * 0.8).join(",")})`;
+        const activeLyricColor = color.isDark
+          ? `rgb(${color.value.map((c) => Math.min(255, c * 2)).join(",")})`
+          : `rgb(${color.value.map((c) => c * 0.5).join(",")})`;
+
+        // Usamos nuestra utilidad para obtener blanco o negro puros.
+        const highContrastText = getHighContrastTextColor(backgroundColor);
+
         const newColors = {
           hex: color.hex,
-          dark: color.isDark ? `rgb(${color.value.map((c) => c * 0.7).join(",")})` : `rgb(${color.value.map((c) => c * 0.8).join(",")})`,
+          dark: backgroundColor,
           light: `rgb(${color.value.map((c) => Math.min(255, c * 1.5)).join(",")})`,
-          text: color.isDark ? "#FFFFFF" : "#000000",
-          textLight: color.isDark
-            ? `rgb(${color.value.map((c) => Math.min(255, c * 2)).join(",")})`
-            : `rgb(${color.value.map((c) => c * 0.5).join(",")})`,
+          text: highContrastText, // <-- USAMOS EL COLOR DE ALTO CONTRASTE (BLANCO O NEGRO)
+          textLight: activeLyricColor, // Mantenemos el color de acento
         };
         setColors(newColors);
       })
