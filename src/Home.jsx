@@ -13,7 +13,7 @@ import NowPlayingView from "./components/player/NowPlayingView";
 import QueuePanel from "./components/player/QueuePanel";
 import PlayerControls from "./components/player/PlayerControls";
 import VolumeIcon from "./components/icons/Volume";
-import { getHighContrastTextColor } from "./utils/colorUtils"; // <-- IMPORTAMOS LA NUEVA FUNCIÓN
+import { getHighContrastTextColor } from "./utils/colorUtils";
 
 const PlaylistView = lazy(() => import("./PlaylistView"));
 const fac = new FastAverageColor();
@@ -47,6 +47,21 @@ const Home = () => {
   const [mainDesktopView, setMainDesktopView] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // --- INICIO: LÓGICA PARA INTERCEPTAR EL BOTÓN "ATRÁS" ---
+  useEffect(() => {
+    const handlePopState = () => {
+      // Cuando el usuario presiona "atrás", el estado que empujamos se pierde.
+      // Esto nos indica que debemos volver a la pantalla de bienvenida.
+      setSelectedPlaylist(null);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+  // --- FIN: LÓGICA PARA INTERCEPTAR EL BOTÓN "ATRÁS" ---
+
   useEffect(() => {
     const fetchPlaylists = async () => {
       try {
@@ -66,6 +81,13 @@ const Home = () => {
         setMainDesktopView("list");
         return;
       }
+
+      // --- INICIO: MANIPULACIÓN DEL HISTORIAL ---
+      // Empujamos un nuevo estado al historial del navegador. No cambia la URL,
+      // pero crea una "página" a la que el botón "atrás" puede volver.
+      window.history.pushState({ playlistId: playlist.id }, "", "/");
+      // --- FIN: MANIPULACIÓN DEL HISTORIAL ---
+
       setMainDesktopView("list");
       setSelectedPlaylist(playlist);
       setPlaylistSongs([]);
@@ -104,16 +126,13 @@ const Home = () => {
         const activeLyricColor = color.isDark
           ? `rgb(${color.value.map((c) => Math.min(255, c * 2)).join(",")})`
           : `rgb(${color.value.map((c) => c * 0.5).join(",")})`;
-
-        // Usamos nuestra utilidad para obtener blanco o negro puros.
         const highContrastText = getHighContrastTextColor(backgroundColor);
-
         const newColors = {
           hex: color.hex,
           dark: backgroundColor,
           light: `rgb(${color.value.map((c) => Math.min(255, c * 1.5)).join(",")})`,
-          text: highContrastText, // <-- USAMOS EL COLOR DE ALTO CONTRASTE (BLANCO O NEGRO)
-          textLight: activeLyricColor, // Mantenemos el color de acento
+          text: highContrastText,
+          textLight: activeLyricColor,
         };
         setColors(newColors);
       })
