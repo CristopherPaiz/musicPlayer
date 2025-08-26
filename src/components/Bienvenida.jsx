@@ -1,3 +1,4 @@
+import { useState } from "react";
 import PropTypes from "prop-types";
 
 const PlaylistSkeleton = () => (
@@ -8,8 +9,10 @@ const PlaylistSkeleton = () => (
 );
 
 const Bienvenida = ({ playlists, onPlaylistSelect, isLoading }) => {
+  const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
+
   return (
-    <div className="w-full h-dvh flex flex-col bg-neutral-900 text-white overflow-auto pb-12 sm:pb-2">
+    <div className="w-full h-dvh flex flex-col bg-neutral-900 text-white overflow-auto pb-6 sm:pb-2">
       <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
         <div className="hidden sm:flex w-full items-center justify-center flex-col">
           <h1 className="text-6xl font-bold">Music Player</h1>
@@ -22,8 +25,6 @@ const Bienvenida = ({ playlists, onPlaylistSelect, isLoading }) => {
           <div className="grid grid-cols-2 gap-4 overflow-y-auto">
             {isLoading ? (
               <>
-                <PlaylistSkeleton />
-                <PlaylistSkeleton />
                 <PlaylistSkeleton />
                 <PlaylistSkeleton />
                 <PlaylistSkeleton />
@@ -55,9 +56,35 @@ const Bienvenida = ({ playlists, onPlaylistSelect, isLoading }) => {
             Cristopher Paiz
           </a>
         </h4>
-        <p className="text-xs text-gray-500 text-balance max-w-2xl mx-auto">
-          Esta aplicación simula streaming de audio fragmentando las canciones para una carga más rápida, sin necesidad de un backend.
-        </p>
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => setIsDisclaimerOpen(!isDisclaimerOpen)}
+            className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors font-bold py-1"
+          >
+            Descargo de Responsabilidad
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`size-4 transition-transform duration-300 ${isDisclaimerOpen ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div
+            className={`transition-[max-height,margin] duration-500 ease-in-out overflow-hidden ${
+              isDisclaimerOpen ? "max-h-screen mt-2" : "max-h-0"
+            }`}
+          >
+            <p className="text-xs text-gray-500 text-balance">
+              Este proyecto se ha desarrollado con fines estrictamente educativos y de demostración. No reclamo la propiedad de los derechos de autor
+              de ningún contenido de audio, incluyendo música y audiolibros, aquí presentado. Si usted es el titular de los derechos de autor de
+              cualquier material y desea que sea retirado, por favor contácteme; el contenido será eliminado de inmediato y sin demora al primer aviso
+              para evitar cualquier inconveniente legal.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
