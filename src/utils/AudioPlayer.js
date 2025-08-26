@@ -1,11 +1,10 @@
 import { API_URL } from "../config";
 
-const INITIAL_BUFFER_SIZE = 3;
-const ROLLING_BUFFER_TARGET = 2;
-const MAX_BUFFER_SIZE = 4;
-const FRAGMENT_DURATION_SECONDS = 10;
-const FETCH_TRIGGER_FACTOR = 1.5;
-const CROSSFADE_DURATION = 0.01;
+const INITIAL_FRAGMENTS_TO_LOAD = 3;
+const ROLLING_FRAGMENTS_TO_LOAD = 2;
+const PRELOAD_AHEAD_SECONDS = 15;
+const FRAGMENT_DURATION_SECONDS = 10; // Usado solo como una *estimación* para el 'seek' inicial.
+const CROSSFADE_DURATION = 0.01; // Crossfade ultra corto de 10ms, ahora posible por la alta precisión.
 
 export class AudioPlayer {
   constructor({ onStateChange, onSeekUpdate, onSongEnd, onBufferStateChange }) {
@@ -16,19 +15,15 @@ export class AudioPlayer {
 
     this._initAudioEngine();
 
-    this.song = null;
-    this.masterBuffer = null;
-    this.sourceNode = null;
-    this.playbackState = "stopped";
-    this.startTime = 0;
-    this.pauseOffset = 0;
-    this.basePlaybackTime = 0;
+    this.scheduledSources = [];
+    this.fragmentCache = new Map();
+    this.pendingFragments = new Set();
     this.updateInterval = null;
 
-    this.fragmentCache = new Map();
-    this.nextFragmentToAppend = 1;
-    this.appendedFragments = [];
-    this.isFetching = false;
+    this._resetState();
+
+    this.worker = new Worker("/audio-worker.js");
+    this.worker.onmessage = this._handleWorkerMessage.bind(this);
   }
 
   _initAudioEngine() {
@@ -36,23 +31,55 @@ export class AudioPlayer {
       this.audioContext.close();
     }
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    this.gainNode = this.audioContext.createGain();
-    this.gainNode.connect(this.audioContext.destination);
+    this.masterGainNode = this.audioContext.createGain();
+    this.masterGainNode.connect(this.audioContext.destination);
 
-    if (this.worker) this.worker.terminate();
-    this.worker = new Worker("/audio-worker.js");
+    this.faderGainA = this.audioContext.createGain();
+    this.faderGainA.connect(this.masterGainNode);
+    this.faderGainB = this.audioContext.createGain();
+    this.faderGainB.connect(this.masterGainNode);
+  }
+
+  _resetState(keepSong = false) {
+    if (this.updateInterval) clearInterval(this.updateInterval);
+    this.updateInterval = null;
+
+    this.scheduledSources.forEach((source) => {
+      try {
+        source.onended = null;
+        source.stop();
+      } catch (e) {}
+    });
+
+    this.worker?.postMessage({ type: "cancel" });
+
+    if (!keepSong) {
+      this.song = null;
+    }
+    this.playbackState = "stopped";
+    this.fragmentCache.clear();
+    this.pendingFragments.clear();
+    this.scheduledSources = [];
+
+    this.songStartTime = 0;
+    this.pauseTime = 0;
+    this.nextFragmentToSchedule = 1;
+    this.nextScheduleTime = 0; // El tiempo absoluto en el AudioContext para el siguiente fragmento.
+    this.faderToggle = true;
   }
 
   async loadSong(song, shouldPlay = false) {
     if (this.song?.uuid === song.uuid) return;
-    this.stop();
+
+    this._resetState();
     this.song = song;
     this.playbackState = "loading";
     this.onBufferStateChange(true);
 
     try {
-      // La carga inicial sigue siendo de 3 para un arranque robusto
-      await this._loadFromFragment(1, INITIAL_BUFFER_SIZE);
+      await this._fetchFragments(1, INITIAL_FRAGMENTS_TO_LOAD);
+      this.playbackState = "ready";
+      this.onBufferStateChange(false);
       if (shouldPlay) this.play();
     } catch (error) {
       this.playbackState = "stopped";
@@ -60,93 +87,17 @@ export class AudioPlayer {
     }
   }
 
-  async _loadFromFragment(startFragment, numFragmentsToLoad) {
-    this.fragmentCache.clear();
-    this.appendedFragments = [];
-    this.basePlaybackTime = (startFragment - 1) * FRAGMENT_DURATION_SECONDS;
-    this.nextFragmentToAppend = startFragment;
-
-    const fragmentsToLoad = Array.from({ length: numFragmentsToLoad }, (_, i) => startFragment + i).filter((index) => index <= this.song.fragmentos);
-
-    await this._fetchAndCacheFragments(fragmentsToLoad);
-
-    const initialBuffers = fragmentsToLoad.map((index) => this.fragmentCache.get(index)).filter(Boolean);
-    if (initialBuffers.length === 0) throw new Error(`Failed to load fragment ${startFragment}`);
-
-    this.masterBuffer = this._createMasterBufferWithCrossfade(initialBuffers);
-    this.appendedFragments = fragmentsToLoad.filter((index) => this.fragmentCache.has(index));
-    this.nextFragmentToAppend = Math.max(...this.appendedFragments) + 1;
-
-    this.playbackState = "ready";
-    this.onBufferStateChange(false);
-  }
-
-  async _fetchAndCacheFragments(fragmentIndexes) {
-    const urlsToFetch = fragmentIndexes.filter((index) => !this.fragmentCache.has(index));
-    if (urlsToFetch.length === 0) return;
-
-    const start = Math.min(...urlsToFetch);
-    const count = Math.max(...urlsToFetch) - start + 1;
-
-    const urlsRes = await fetch(`${API_URL}/api/canciones/${this.song.uuid}/fragments/secure-urls?start=${start}&count=${count}`);
-    const urlsData = await urlsRes.json();
-    const urlMap = new Map(urlsData.map((item) => [item.index, item.url]));
-
-    const decodePromises = urlsToFetch.map((index) => {
-      const url = urlMap.get(index);
-      if (!url) return Promise.resolve();
-      return fetch(url)
-        .then((res) => res.arrayBuffer())
-        .then((buffer) => this.audioContext.decodeAudioData(buffer))
-        .then((audioBuffer) => this.fragmentCache.set(index, audioBuffer));
-    });
-    await Promise.all(decodePromises);
-  }
-
-  _createMasterBufferWithCrossfade(buffers) {
-    if (!buffers || buffers.length === 0) return null;
-
-    const crossfadeSamples = Math.floor(CROSSFADE_DURATION * this.audioContext.sampleRate);
-    const totalSamples = buffers.reduce((sum, b) => sum + b.length, 0) - crossfadeSamples * (buffers.length - 1);
-    const channels = buffers[0].numberOfChannels;
-    const masterBuffer = this.audioContext.createBuffer(channels, totalSamples, this.audioContext.sampleRate);
-
-    let currentPosition = 0;
-    for (let i = 0; i < buffers.length; i++) {
-      const buffer = buffers[i];
-      for (let channel = 0; channel < channels; channel++) {
-        const masterData = masterBuffer.getChannelData(channel);
-        const bufferData = buffer.getChannelData(channel % buffer.numberOfChannels);
-
-        if (i > 0) {
-          for (let j = 0; j < crossfadeSamples; j++) {
-            const masterIndex = currentPosition - crossfadeSamples + j;
-            const fadeInGain = j / crossfadeSamples;
-            const fadeOutGain = 1 - fadeInGain;
-            masterData[masterIndex] = masterData[masterIndex] * fadeOutGain + bufferData[j] * fadeInGain;
-          }
-          masterData.set(bufferData.subarray(crossfadeSamples), currentPosition);
-        } else {
-          masterData.set(bufferData, currentPosition);
-        }
-      }
-      currentPosition += buffer.length - (i > 0 ? crossfadeSamples : 0);
-    }
-    return masterBuffer;
-  }
-
   play() {
-    if (this.playbackState === "playing" || !this.masterBuffer) return;
-    if (this.audioContext.state === "suspended") this.audioContext.resume();
+    if (this.playbackState === "playing" || !this.song) return;
+    if (this.audioContext.state === "suspended") {
+      this.audioContext.resume();
+    }
 
-    this.sourceNode = this.audioContext.createBufferSource();
-    this.sourceNode.buffer = this.masterBuffer;
-    this.sourceNode.connect(this.gainNode);
+    this.songStartTime = this.audioContext.currentTime - this.pauseTime;
+    this.nextFragmentToSchedule = Math.floor(this.pauseTime / FRAGMENT_DURATION_SECONDS) + 1;
+    this.faderToggle = this.nextFragmentToSchedule % 2 !== 0;
 
-    const offset = this.pauseOffset;
-    this.sourceNode.start(0, offset);
-
-    this.startTime = this.audioContext.currentTime - offset;
+    this._scheduleAvailableFragments();
     this.playbackState = "playing";
     this.onStateChange(true);
     this._startUpdateLoop();
@@ -154,12 +105,14 @@ export class AudioPlayer {
 
   pause() {
     if (this.playbackState !== "playing") return;
-    this.pauseOffset = this.audioContext.currentTime - this.startTime;
-    if (this.sourceNode) {
+    this.pauseTime = this.audioContext.currentTime - this.songStartTime;
+
+    this.scheduledSources.forEach((source) => {
       try {
-        this.sourceNode.stop();
+        source.stop();
       } catch (e) {}
-    }
+    });
+    this.scheduledSources = [];
 
     this.playbackState = "paused";
     this.onStateChange(false);
@@ -167,22 +120,26 @@ export class AudioPlayer {
   }
 
   stop() {
-    if (this.playbackState === "stopped") return;
-    if (this.sourceNode) {
-      try {
-        this.sourceNode.stop();
-      } catch (e) {}
-    }
-
-    this.playbackState = "stopped";
+    this._resetState();
     this.onStateChange(false);
-    this.pauseOffset = 0;
-    this.basePlaybackTime = 0;
-    this.nextFragmentToAppend = 1;
-    this.appendedFragments = [];
-    this.fragmentCache.clear();
-    this.masterBuffer = null;
-    this._stopUpdateLoop();
+    this.onSeekUpdate(0);
+  }
+
+  async seek(time) {
+    if (!this.song) return;
+    const wasPlaying = this.playbackState === "playing";
+
+    this._resetState(true);
+    this.onBufferStateChange(true);
+
+    this.pauseTime = time;
+    const targetFragment = Math.floor(time / FRAGMENT_DURATION_SECONDS) + 1;
+    await this._fetchFragments(targetFragment, INITIAL_FRAGMENTS_TO_LOAD);
+
+    if (wasPlaying) {
+      this.play();
+    }
+    this.onBufferStateChange(false);
   }
 
   _startUpdateLoop() {
@@ -190,24 +147,18 @@ export class AudioPlayer {
     this.updateInterval = setInterval(() => {
       if (this.playbackState !== "playing") return;
 
-      const elapsedTimeInCurrentBuffer = this.audioContext.currentTime - this.startTime;
-      const totalElapsedTime = this.basePlaybackTime + elapsedTimeInCurrentBuffer;
-      this.onSeekUpdate(totalElapsedTime);
+      const currentPlaybackTime = this.audioContext.currentTime - this.songStartTime;
+      this.onSeekUpdate(currentPlaybackTime);
 
-      if (totalElapsedTime >= this.song.duracion - 0.25) {
+      if (currentPlaybackTime >= this.song.duracion) {
         this.stop();
         this.onSongEnd();
         return;
       }
 
-      const remainingTime = this.masterBuffer.duration - elapsedTimeInCurrentBuffer;
-
-      if (remainingTime < FRAGMENT_DURATION_SECONDS * FETCH_TRIGGER_FACTOR && !this.isFetching && this.nextFragmentToAppend <= this.song.fragmentos) {
-        this._fetchNextBatch();
-      }
-
-      if (this.fragmentCache.has(this.nextFragmentToAppend)) {
-        this._appendToMasterBuffer();
+      const secondsUntilEnd = this.nextScheduleTime - this.audioContext.currentTime;
+      if (secondsUntilEnd < PRELOAD_AHEAD_SECONDS) {
+        this._fetchFragments(this.nextFragmentToSchedule, ROLLING_FRAGMENTS_TO_LOAD);
       }
     }, 250);
   }
@@ -216,88 +167,94 @@ export class AudioPlayer {
     if (this.updateInterval) clearInterval(this.updateInterval);
   }
 
-  async _fetchNextBatch() {
-    this.isFetching = true;
-    const fragmentsToLoad = Array.from({ length: ROLLING_BUFFER_TARGET }, (_, i) => this.nextFragmentToAppend + i).filter(
-      (index) => index <= this.song.fragmentos
+  async _fetchFragments(startFragment, numFragments) {
+    const fragmentIndexes = Array.from({ length: numFragments }, (_, i) => startFragment + i).filter(
+      (index) => index <= this.song.fragmentos && !this.fragmentCache.has(index) && !this.pendingFragments.has(index)
     );
+    if (fragmentIndexes.length === 0) return;
 
-    if (fragmentsToLoad.length > 0) {
-      await this._fetchAndCacheFragments(fragmentsToLoad);
-    }
-    this.isFetching = false;
-  }
-
-  _appendToMasterBuffer() {
-    if (!this.fragmentCache.has(this.nextFragmentToAppend)) return;
-
-    const elapsedTime = this.audioContext.currentTime - this.startTime;
-
-    this.appendedFragments.push(this.nextFragmentToAppend);
-
-    let fragmentToDiscard = null;
-    if (this.appendedFragments.length > MAX_BUFFER_SIZE) {
-      const discardedIndex = this.appendedFragments.shift();
-      fragmentToDiscard = this.fragmentCache.get(discardedIndex);
-      this.fragmentCache.delete(discardedIndex);
-    }
-
-    const buffersToConcatenate = this.appendedFragments.map((index) => this.fragmentCache.get(index));
-    const newMasterBuffer = this._createMasterBufferWithCrossfade(buffersToConcatenate);
-
-    let newElapsedTime = elapsedTime;
-    if (fragmentToDiscard) {
-      newElapsedTime -= fragmentToDiscard.duration - CROSSFADE_DURATION;
-      this.basePlaybackTime += fragmentToDiscard.duration - CROSSFADE_DURATION;
-    }
-
-    if (this.sourceNode) {
-      try {
-        this.sourceNode.stop();
-      } catch (e) {}
-    }
-
-    this.masterBuffer = newMasterBuffer;
-    this.sourceNode = this.audioContext.createBufferSource();
-    this.sourceNode.buffer = this.masterBuffer;
-    this.sourceNode.connect(this.gainNode);
-    this.sourceNode.start(0, newElapsedTime);
-
-    this.startTime = this.audioContext.currentTime - newElapsedTime;
-    this.nextFragmentToAppend++;
-  }
-
-  async seek(time) {
-    if (!this.song) return;
-    const wasPlaying = this.playbackState === "playing";
-
-    this.stop();
-    this.playbackState = "loading";
-    this.onBufferStateChange(true);
-
-    this.worker.postMessage({ type: "cancel" });
-
-    const targetFragment = Math.floor(time / FRAGMENT_DURATION_SECONDS) + 1;
-    const seekOffset = time % FRAGMENT_DURATION_SECONDS;
+    fragmentIndexes.forEach((index) => this.pendingFragments.add(index));
 
     try {
-      // --- LÓGICA DE SEEK PRIORITARIO ---
-      // 1. Cargar solo UN fragmento, el de destino, para una respuesta inmediata.
-      await this._loadFromFragment(targetFragment, 1);
-      this.pauseOffset = seekOffset;
-      this.onSeekUpdate(time);
+      const urlsRes = await fetch(`${API_URL}/api/canciones/${this.song.uuid}/fragments/secure-urls?start=${startFragment}&count=${numFragments}`);
+      const urlsData = await urlsRes.json();
+      const urlMap = new Map(urlsData.map((item) => [item.index, item.url]));
 
-      if (wasPlaying) {
-        this.play();
-        // 2. Inmediatamente después de empezar a reproducir, pedir los siguientes fragmentos en segundo plano.
-        setTimeout(() => this._fetchNextBatch(), 500); // Pequeño delay para dar prioridad al play
-      } else {
-        this.playbackState = "paused";
-      }
+      fragmentIndexes.forEach((index) => {
+        const url = urlMap.get(index);
+        if (url) {
+          this.worker.postMessage({ type: "load", url, index });
+        } else {
+          this.pendingFragments.delete(index);
+        }
+      });
     } catch (error) {
-      this.playbackState = "stopped";
-    } finally {
-      this.onBufferStateChange(false);
+      fragmentIndexes.forEach((index) => this.pendingFragments.delete(index));
+    }
+  }
+
+  async _handleWorkerMessage(event) {
+    const { status, index, arrayBuffer } = event.data;
+    this.pendingFragments.delete(index);
+
+    if (status === "success" && arrayBuffer) {
+      try {
+        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+        this.fragmentCache.set(index, audioBuffer);
+        if (this.playbackState === "playing") {
+          this._scheduleAvailableFragments();
+        }
+      } catch (e) {}
+    }
+  }
+
+  _scheduleAvailableFragments() {
+    while (this.fragmentCache.has(this.nextFragmentToSchedule)) {
+      const audioBuffer = this.fragmentCache.get(this.nextFragmentToSchedule);
+      if (!audioBuffer) break;
+
+      const isFirstFragmentOfPlayback = this.scheduledSources.length === 0;
+      const measuredDuration = audioBuffer.duration;
+
+      const targetGain = this.faderToggle ? this.faderGainA : this.faderGainB;
+      const otherGain = this.faderToggle ? this.faderGainB : this.faderGainA;
+
+      let scheduleAt;
+      let offset = 0;
+
+      if (isFirstFragmentOfPlayback) {
+        const fragmentStartTime = (this.nextFragmentToSchedule - 1) * FRAGMENT_DURATION_SECONDS;
+        offset = this.pauseTime - fragmentStartTime;
+        scheduleAt = this.audioContext.currentTime;
+        this.nextScheduleTime = scheduleAt + measuredDuration - offset;
+      } else {
+        scheduleAt = this.nextScheduleTime - CROSSFADE_DURATION;
+        this.nextScheduleTime += measuredDuration - CROSSFADE_DURATION;
+      }
+
+      const source = this.audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(targetGain);
+
+      if (isFirstFragmentOfPlayback) {
+        targetGain.gain.setValueAtTime(1, this.audioContext.currentTime);
+        otherGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+      } else {
+        targetGain.gain.setValueAtTime(0, scheduleAt);
+        targetGain.gain.linearRampToValueAtTime(1, scheduleAt + CROSSFADE_DURATION);
+        otherGain.gain.setValueAtTime(1, scheduleAt);
+        otherGain.gain.linearRampToValueAtTime(0, scheduleAt + CROSSFADE_DURATION);
+      }
+
+      source.start(scheduleAt, offset);
+
+      source.onended = () => {
+        this.scheduledSources = this.scheduledSources.filter((s) => s !== source);
+      };
+
+      this.scheduledSources.push(source);
+      this.nextFragmentToSchedule++;
+      this.faderToggle = !this.faderToggle;
     }
   }
 
@@ -308,6 +265,6 @@ export class AudioPlayer {
   }
 
   setVolume(volume) {
-    if (this.gainNode) this.gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+    if (this.masterGainNode) this.masterGainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
   }
 }
