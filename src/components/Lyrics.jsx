@@ -217,20 +217,20 @@ const Lyrics = ({ lyrics, timeElapsed, color, darkColor, onSeek }) => {
           </div>
         )}
         <button
+          onClick={() => handleFontSizeChange("text-sm")}
+          className={`px-3 py-1 rounded-full text-base ${fontSize === "text-sm" ? "bg-white text-black" : "text-white/70"}`}
+        >
+          A
+        </button>
+        <button
           onClick={() => handleFontSizeChange("text-base")}
-          className={`px-3 py-1 rounded-full text-sm ${fontSize === "text-base" ? "bg-white text-black" : "text-white/70"}`}
+          className={`px-3 py-1 rounded-full text-base ${fontSize === "text-base" ? "bg-white text-black" : "text-white/70"}`}
         >
           A
         </button>
         <button
-          onClick={() => handleFontSizeChange("text-xl")}
-          className={`px-3 py-1 rounded-full text-base ${fontSize === "text-xl" ? "bg-white text-black" : "text-white/70"}`}
-        >
-          A
-        </button>
-        <button
-          onClick={() => handleFontSizeChange("text-2xl")}
-          className={`px-3 py-1 rounded-full text-lg ${fontSize === "text-2xl" ? "bg-white text-black" : "text-white/70"}`}
+          onClick={() => handleFontSizeChange("text-lg")}
+          className={`px-3 py-1 rounded-full text-lg ${fontSize === "text-lg" ? "bg-white text-black" : "text-white/70"}`}
         >
           A
         </button>
