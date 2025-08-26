@@ -26,6 +26,11 @@ const Bienvenida = ({ playlists, onPlaylistSelect, isLoading }) => {
                 <PlaylistSkeleton />
                 <PlaylistSkeleton />
                 <PlaylistSkeleton />
+                <PlaylistSkeleton />
+                <PlaylistSkeleton />
+                <PlaylistSkeleton />
+                <PlaylistSkeleton />
+                <PlaylistSkeleton />
               </>
             ) : (
               playlists.map((playlist) => (
