@@ -1,7 +1,9 @@
 import PropTypes from "prop-types";
 import Lyrics from "../Lyrics";
+import { usePlayerSeek } from "../../hooks/usePlayerSeek";
 
-const DesktopLyricsView = ({ currentSong, image, lyrics, seek, colors, onSeek }) => {
+const DesktopLyricsView = ({ currentSong, image, lyrics, colors, onSeek }) => {
+  const seek = usePlayerSeek();
   if (!currentSong) return null;
 
   return (
@@ -26,7 +28,6 @@ DesktopLyricsView.propTypes = {
   currentSong: PropTypes.object,
   image: PropTypes.string,
   lyrics: PropTypes.string,
-  seek: PropTypes.number.isRequired,
   colors: PropTypes.object.isRequired,
   onSeek: PropTypes.func.isRequired,
 };

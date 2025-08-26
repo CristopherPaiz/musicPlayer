@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import Random from "../icons/Random";
 import NoRandom from "../icons/NoRandom";
@@ -6,6 +7,7 @@ import Pause from "../icons/Pause";
 import Play from "../icons/Play";
 import SkipForward from "../icons/SkipForward";
 import VolumeIcon from "../icons/Volume";
+import { usePlayerSeek } from "../../hooks/usePlayerSeek";
 
 const PlayerControls = ({
   currentSong,
@@ -13,29 +15,60 @@ const PlayerControls = ({
   onTogglePlayPause,
   onSkipBack,
   onSkipForward,
-  seek,
-  handleSeek,
+  setUserSeek,
   random,
   setRandom,
   accentColor,
   onVolumeClick,
 }) => {
+  const liveSeek = usePlayerSeek();
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragValue, setDragValue] = useState(0);
+
+  const displaySeek = isDragging ? dragValue : liveSeek;
+
+  useEffect(() => {
+    if (!isDragging) {
+      setDragValue(liveSeek);
+    }
+  }, [liveSeek, isDragging]);
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragMove = (e) => {
+    if (isDragging) {
+      setDragValue(Number(e.target.value));
+    }
+  };
+
+  const handleDragEnd = (e) => {
+    const finalSeekValue = Number(e.target.value);
+    setUserSeek(finalSeekValue);
+    setIsDragging(false);
+  };
+
   if (!currentSong) return null;
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
       <div className="flex items-center gap-4 text-xs w-full max-w-2xl px-4 sm:px-0">
-        <span>{new Date(seek * 1000).toISOString().substr(14, 5)}</span>
+        <span>{new Date(displaySeek * 1000).toISOString().substr(14, 5)}</span>
         <input
           type="range"
           min="0"
-          max={currentSong.length ? Math.floor(currentSong.length) : 100}
-          value={seek}
-          onChange={handleSeek}
+          max={currentSong.duracion ? Math.floor(currentSong.duracion) : 100}
+          value={displaySeek}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+          onChange={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onTouchEnd={handleDragEnd}
           className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
           style={{ accentColor: accentColor }}
         />
-        <span>{new Date(currentSong.length * 1000).toISOString().substr(14, 5)}</span>
+        <span>{new Date(currentSong.duracion * 1000).toISOString().substr(14, 5)}</span>
       </div>
 
       <div className="flex items-center justify-center gap-6 w-full">
@@ -69,8 +102,7 @@ PlayerControls.propTypes = {
   onTogglePlayPause: PropTypes.func.isRequired,
   onSkipBack: PropTypes.func.isRequired,
   onSkipForward: PropTypes.func.isRequired,
-  seek: PropTypes.number.isRequired,
-  handleSeek: PropTypes.func.isRequired,
+  setUserSeek: PropTypes.func.isRequired,
   random: PropTypes.bool.isRequired,
   setRandom: PropTypes.func.isRequired,
   accentColor: PropTypes.string,

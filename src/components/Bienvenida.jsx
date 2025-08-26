@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
 
 const Bienvenida = ({ playlists, onPlaylistSelect }) => {
   return (
@@ -27,6 +28,11 @@ const Bienvenida = ({ playlists, onPlaylistSelect }) => {
       </div>
 
       <footer className="p-4 text-center border-t border-white/10">
+        <div className="mb-4">
+          <Link to="/login" className="px-4 py-2 text-sm text-white bg-neutral-700 hover:bg-neutral-600 rounded-full transition-colors">
+            Admin Login
+          </Link>
+        </div>
         <h4 className="mb-2 text-white/80 text-sm">
           Hecho por{" "}
           <a href="https://www.github.com/CristopherPaiz" target="_blank" rel="noopener noreferrer" className="mx-1 hover:underline text-blue-400">

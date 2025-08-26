@@ -2,11 +2,11 @@ import { useState, useEffect, lazy, Suspense, useCallback, useMemo } from "react
 import { FastAverageColor } from "fast-average-color";
 import Drawer from "react-modern-drawer";
 import "react-modern-drawer/dist/index.css";
-
+import { API_URL } from "./config";
+import { usePlayer } from "./context/PlayerContext";
 import Playlist from "./components/icons/Playlist";
 import Bienvenida from "./components/Bienvenida";
 import SongListSkeleton from "./components/skeletons/SongListSkeleton";
-import SongPlayer from "./components/SongPlayer";
 import MiniPlayer from "./components/player/MiniPlayer";
 import BottomNav from "./components/player/BottomNav";
 import NowPlayingView from "./components/player/NowPlayingView";
@@ -15,106 +15,44 @@ import PlayerControls from "./components/player/PlayerControls";
 import VolumeIcon from "./components/icons/Volume";
 
 const PlaylistView = lazy(() => import("./PlaylistView"));
-
-const URL_BASE = "https://music-fragments.s3.fr-par.scw.cloud/";
 const fac = new FastAverageColor();
 
 const Home = () => {
+  const {
+    queue,
+    currentSong,
+    isPlaying,
+    random,
+    setRandom,
+    volume,
+    setVolume,
+    setUserSeek,
+    lyrics,
+    currentImage,
+    setCurrentSong: handleSelectSong,
+    skipSong,
+    handleSkipBack,
+    handleTogglePlayPause,
+  } = usePlayer();
+
   const [playlists, setPlaylists] = useState([]);
-  const [playlistCache, setPlaylistCache] = useState({});
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [playlistSongs, setPlaylistSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const [queue, setQueue] = useState([]);
-  const [currentSong, setCurrentSong] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [random, setRandom] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [seek, setSeek] = useState(0);
-  const [userSeek, setUserSeek] = useState(undefined);
-  const [lyrics, setLyrics] = useState(null);
-  const [currentImage, setCurrentImage] = useState(null);
-  const [imageCache, setImageCache] = useState({});
   const [colors, setColors] = useState({ hex: "#1db954", dark: "#121212", light: "#282828", text: "#FFFFFF", textLight: "#FFFFFF" });
-
   const [isPlaylistDrawerOpen, setPlaylistDrawerOpen] = useState(false);
   const [isQueueDrawerOpen, setQueueDrawerOpen] = useState(false);
   const [isNowPlayingOpenMobile, setNowPlayingOpenMobile] = useState(false);
   const [mainDesktopView, setMainDesktopView] = useState("list");
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchHistory, setSearchHistory] = useState([]);
-
-  // Cargar estado desde localStorage al iniciar
-  useEffect(() => {
-    try {
-      const savedVolume = localStorage.getItem("playerVolume");
-      if (savedVolume !== null) setVolume(JSON.parse(savedVolume));
-
-      const savedQueue = localStorage.getItem("songQueue");
-      if (savedQueue) setQueue(JSON.parse(savedQueue));
-
-      const savedSongState = localStorage.getItem("currentSongState");
-      if (savedSongState) {
-        const { song, time } = JSON.parse(savedSongState);
-        if (song) {
-          setCurrentSong(song);
-          setUserSeek(time); // Inicia la canción en la posición guardada
-        }
-      }
-
-      const savedHistory = localStorage.getItem("searchHistory");
-      if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
-    } catch (error) {
-      console.error("Error al cargar estado desde localStorage", error);
-    }
-  }, []);
-
-  // Guardar estado en localStorage
-  useEffect(() => {
-    localStorage.setItem("playerVolume", JSON.stringify(volume));
-  }, [volume]);
-
-  useEffect(() => {
-    localStorage.setItem("songQueue", JSON.stringify(queue));
-  }, [queue]);
-
-  useEffect(() => {
-    if (currentSong && seek > 0) {
-      // Solo guarda si hay una canción y ha empezado a sonar
-      const stateToSave = { song: currentSong, time: seek };
-      localStorage.setItem("currentSongState", JSON.stringify(stateToSave));
-    }
-  }, [currentSong, seek]);
-
-  useEffect(() => {
-    localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
-  }, [searchHistory]);
-
-  // Interceptar botón "atrás"
-  useEffect(() => {
-    const handlePopState = (e) => {
-      e.preventDefault();
-      window.history.pushState(null, "", "/");
-      setSelectedPlaylist(null);
-      setNowPlayingOpenMobile(false);
-      setMainDesktopView("list");
-    };
-    window.history.pushState(null, "", "/");
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
 
   useEffect(() => {
     const fetchPlaylists = async () => {
       try {
-        const response = await fetch(URL_BASE + "plays.json");
+        const response = await fetch(`${API_URL}/api/playlists`);
         const data = await response.json();
         setPlaylists(data);
-      } catch (error) {
-        console.error("Failed to fetch playlists:", error);
-      }
+      } catch (error) {}
     };
     fetchPlaylists();
   }, []);
@@ -123,164 +61,32 @@ const Home = () => {
     async (playlist) => {
       if (isPlaylistDrawerOpen) setPlaylistDrawerOpen(false);
       if (isNowPlayingOpenMobile) setNowPlayingOpenMobile(false);
-
       if (selectedPlaylist?.id === playlist.id) {
         setMainDesktopView("list");
         return;
       }
-
       setMainDesktopView("list");
       setSelectedPlaylist(playlist);
       setPlaylistSongs([]);
       setIsLoading(true);
       setSearchTerm("");
-
-      if (playlistCache[playlist.id]) {
-        setPlaylistSongs(playlistCache[playlist.id]);
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(`${URL_BASE}${playlist.root}/${playlist.play}.json`);
+        const response = await fetch(`${API_URL}/api/playlists/${playlist.id}`);
         const data = await response.json();
-        const songsWithUrls = data.map((song) => ({
-          ...song,
-          root: playlist.root,
-          coverUrl: `${URL_BASE}${encodeURIComponent(playlist.root)}/${encodeURIComponent(song.artist)}/${encodeURIComponent(song.title)}/cover.webp`,
-        }));
-        setPlaylistCache((prev) => ({ ...prev, [playlist.id]: songsWithUrls }));
-        setPlaylistSongs(songsWithUrls);
+        setPlaylistSongs(data.canciones);
       } catch (error) {
-        console.error("Failed to fetch songs for playlist:", error);
         setSelectedPlaylist(null);
       } finally {
         setIsLoading(false);
       }
     },
-    [selectedPlaylist, playlistCache, isPlaylistDrawerOpen, isNowPlayingOpenMobile]
+    [selectedPlaylist, isPlaylistDrawerOpen, isNowPlayingOpenMobile]
   );
 
-  const handleSelectSong = (song, isFromQueuePanel = false) => {
-    if (currentSong?.id === song.id) {
-      handleTogglePlayPause();
-      return;
-    }
-
-    setUserSeek(0);
-    setSeek(0);
-    setCurrentSong(song);
-    setIsPlaying(true);
+  const onSelectSongFromList = (song) => {
+    handleSelectSong(song, playlistSongs);
     setMainDesktopView("lyrics");
-
-    if (!isFromQueuePanel) {
-      const sourcePlaylist = playlistSongs;
-      if (random) {
-        const otherSongs = sourcePlaylist.filter((s) => s.id !== song.id);
-        const shuffled = otherSongs.sort(() => Math.random() - 0.5);
-        setQueue([song, ...shuffled]);
-      } else {
-        // La cola es siempre la playlist completa en su orden original
-        setQueue(sourcePlaylist);
-      }
-    }
   };
-
-  const handleSetRandom = (isRandom) => {
-    setRandom(isRandom);
-    if (!currentSong) return;
-
-    const songOriginPlaylist = playlists.find((p) => p.root === currentSong.root);
-    if (!songOriginPlaylist) return;
-
-    const sourceList = playlistCache[songOriginPlaylist.id] || [];
-    if (sourceList.length === 0) return;
-
-    if (isRandom) {
-      // MODO ALEATORIO: Canción actual al principio, el resto barajado.
-      const otherSongs = sourceList.filter((s) => s.id !== currentSong.id);
-      const shuffled = otherSongs.sort(() => Math.random() - 0.5);
-      setQueue([currentSong, ...shuffled]);
-    } else {
-      // MODO NORMAL: La cola vuelve a ser la playlist original completa.
-      setQueue(sourceList);
-    }
-  };
-
-  const skipSong = useCallback(
-    (direction) => {
-      if (!currentSong || !queue || queue.length === 0) return;
-      const currentIndex = queue.findIndex((s) => s.id === currentSong.id);
-      if (currentIndex === -1) return;
-
-      let nextIndex = -1;
-      if (direction === "forward") {
-        nextIndex = currentIndex + 1;
-      } else {
-        nextIndex = currentIndex - 1;
-      }
-
-      if (nextIndex >= 0 && nextIndex < queue.length) {
-        setUserSeek(0);
-        setSeek(0);
-        setCurrentSong(queue[nextIndex]);
-        setIsPlaying(true);
-      } else if (direction === "forward") {
-        setIsPlaying(false);
-      }
-    },
-    [currentSong, queue]
-  );
-
-  const handleSkipBack = useCallback(() => {
-    if (!currentSong) return;
-    if (seek > 5) {
-      setUserSeek(0);
-    } else {
-      skipSong("backward");
-    }
-  }, [seek, currentSong, skipSong]);
-
-  useEffect(() => {
-    if (!currentSong) {
-      setCurrentImage(null);
-      return;
-    }
-    setLyrics(null);
-
-    const fetchSongData = async () => {
-      try {
-        const { coverUrl, root, artist, title } = currentSong;
-        const lrcUrl = `${URL_BASE}${encodeURIComponent(root)}/${encodeURIComponent(artist)}/${encodeURIComponent(title)}/lyrics.lrc`;
-
-        if (imageCache[coverUrl]) {
-          setCurrentImage(imageCache[coverUrl]);
-        } else {
-          const imgRes = await fetch(coverUrl);
-          if (imgRes.ok) {
-            const blob = await imgRes.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            setImageCache((prev) => ({ ...prev, [coverUrl]: blobUrl }));
-            setCurrentImage(blobUrl);
-          } else {
-            setCurrentImage(null);
-          }
-        }
-
-        const lrcRes = await fetch(lrcUrl);
-        if (lrcRes.ok) {
-          const text = await lrcRes.text();
-          setLyrics(text.includes("NoSuchKey") ? null : text);
-        } else {
-          setLyrics(null);
-        }
-      } catch (error) {
-        console.error("Failed to fetch song data:", error);
-        setLyrics(null);
-      }
-    };
-    fetchSongData();
-  }, [currentSong]);
 
   useEffect(() => {
     if (!currentImage) {
@@ -302,30 +108,13 @@ const Home = () => {
         };
         setColors(newColors);
       })
-      .catch((e) => console.error(e));
+      .catch(() => {});
   }, [currentImage]);
-
-  const handleSeek = (e) => {
-    const newSeek = parseInt(e.target.value, 10);
-    setSeek(newSeek);
-    setUserSeek(newSeek);
-  };
-
-  const handleTogglePlayPause = useCallback(() => {
-    if (!currentSong) return;
-    setIsPlaying((prev) => !prev);
-  }, [currentSong]);
-
-  const handleAddToSearchHistory = (term) => {
-    if (!term) return;
-    const newHistory = [term, ...searchHistory.filter((item) => item !== term)].slice(0, 10);
-    setSearchHistory(newHistory);
-  };
 
   const filteredSongs = useMemo(() => {
     if (!searchTerm) return playlistSongs;
     return playlistSongs.filter(
-      (song) => song.title.toLowerCase().includes(searchTerm.toLowerCase()) || song.artist.toLowerCase().includes(searchTerm.toLowerCase())
+      (song) => song.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || song.artista.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, playlistSongs]);
 
@@ -335,27 +124,14 @@ const Home = () => {
     onTogglePlayPause: handleTogglePlayPause,
     onSkipBack: handleSkipBack,
     onSkipForward: () => skipSong("forward"),
-    seek,
-    handleSeek,
+    setUserSeek: setUserSeek,
     random,
-    setRandom: handleSetRandom,
+    setRandom,
     accentColor: colors.hex,
   };
 
   return (
     <div className="flex flex-col w-full h-dvh bg-black text-white overflow-hidden">
-      <SongPlayer
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-        selectedSong={currentSong}
-        root={currentSong ? `${URL_BASE}${currentSong.root}` : ""}
-        setPreviousSong={handleSkipBack}
-        setEndSong={() => skipSong("forward")}
-        volume={volume}
-        setSeek={setSeek}
-        userSeek={userSeek}
-      />
-
       <div className="flex flex-1 overflow-hidden">
         <aside className="hidden sm:flex flex-col w-[250px] flex-shrink-0 transition-colors duration-500" style={{ backgroundColor: colors.dark }}>
           <div className="p-4">
@@ -374,16 +150,14 @@ const Home = () => {
                   selectedPlaylist?.id === plays.id ? "bg-white/20" : "hover:bg-white/10"
                 }`}
               >
-                <img src={plays.cover} alt={plays.name} className="size-12 object-cover rounded-md" loading="lazy" />
+                <img src={plays.cover_url} alt={plays.nombre} className="size-12 object-cover rounded-md" loading="lazy" />
                 <div className="text-white text-left overflow-hidden">
-                  <p className="font-bold truncate">{plays.name}</p>
-                  <p className="text-sm opacity-70">{plays.tracks} songs</p>
+                  <p className="font-bold truncate">{plays.nombre}</p>
                 </div>
               </div>
             ))}
           </nav>
         </aside>
-
         <main className="flex-grow flex flex-col overflow-hidden relative transition-colors duration-500" style={{ backgroundColor: colors.dark }}>
           <div
             className="absolute inset-0 w-full h-dvh"
@@ -397,18 +171,16 @@ const Home = () => {
                   songs={filteredSongs}
                   queue={queue}
                   isLoading={isLoading}
-                  onSelectSong={handleSelectSong}
+                  onSelectSong={onSelectSongFromList}
                   currentSong={currentSong}
                   isPlaying={isPlaying}
                   colors={colors}
-                  imageCache={imageCache}
-                  setImageCache={setImageCache}
                   desktopView={mainDesktopView}
-                  desktopLyricsProps={{ currentSong, image: currentImage, lyrics, seek, colors, onSeek: setUserSeek }}
+                  desktopLyricsProps={{ currentSong, image: currentImage, lyrics, colors, onSeek: setUserSeek }}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
-                  searchHistory={searchHistory}
-                  onSearchSubmit={handleAddToSearchHistory}
+                  searchHistory={[]}
+                  onSearchSubmit={() => {}}
                 />
               </Suspense>
             ) : (
@@ -417,51 +189,44 @@ const Home = () => {
           </div>
         </main>
       </div>
-
-      {currentSong && (
-        <footer
-          className="hidden sm:flex items-center justify-between px-4 flex-shrink-0 z-40 border-t border-white/10 h-28 transition-colors duration-500"
-          style={{ backgroundColor: colors.dark }}
-        >
-          <div className="flex items-center gap-4 w-[30%]">
-            {currentImage && <img src={currentImage} alt="cover" className="size-14 rounded" />}
-            <div className="overflow-hidden">
-              <p className="font-bold truncate text-sm">{currentSong.title}</p>
-              <p className="text-xs opacity-70 truncate">{currentSong.artist}</p>
-            </div>
-          </div>
-
-          <div className="flex justify-center w-[40%]">
-            <PlayerControls {...commonPlayerProps} />
-          </div>
-
-          <div className="flex items-center justify-end gap-4 w-[30%]">
-            <div className="flex items-center gap-2 w-32">
-              <VolumeIcon className="size-5 text-white/70" />
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                style={{ accentColor: colors.hex }}
-              />
-            </div>
-          </div>
-        </footer>
-      )}
-
       {currentSong && (
         <>
+          <footer
+            className="hidden sm:flex items-center justify-between px-4 flex-shrink-0 z-40 border-t border-white/10 h-28 transition-colors duration-500"
+            style={{ backgroundColor: colors.dark }}
+          >
+            <div className="flex items-center gap-4 w-[30%]">
+              {currentImage && <img src={currentImage} alt="cover" className="size-14 rounded" />}
+              <div className="overflow-hidden">
+                <p className="font-bold truncate text-sm">{currentSong.titulo}</p>
+                <p className="text-xs opacity-70 truncate">{currentSong.artista}</p>
+              </div>
+            </div>
+            <div className="flex justify-center w-[40%]">
+              <PlayerControls {...commonPlayerProps} currentSong={currentSong} />
+            </div>
+            <div className="flex items-center justify-end gap-4 w-[30%]">
+              <div className="flex items-center gap-2 w-32">
+                <VolumeIcon className="size-5 text-white/70" />
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                  style={{ accentColor: colors.hex }}
+                />
+              </div>
+            </div>
+          </footer>
           <MiniPlayer
             currentSong={currentSong}
             image={currentImage}
             isPlaying={isPlaying}
             onExpand={() => setNowPlayingOpenMobile(true)}
             onTogglePlayPause={handleTogglePlayPause}
-            seek={seek}
           />
           {!isNowPlayingOpenMobile && (
             <BottomNav
@@ -473,13 +238,14 @@ const Home = () => {
           {isNowPlayingOpenMobile && (
             <div className="sm:hidden">
               <NowPlayingView
+                currentSong={currentSong}
                 onClose={() => setNowPlayingOpenMobile(false)}
                 image={currentImage}
                 lyrics={lyrics}
                 colors={colors}
                 volume={volume}
                 setVolume={setVolume}
-                playlistName={selectedPlaylist?.name}
+                playlistName={selectedPlaylist?.nombre}
                 onPlaylistClick={() => setPlaylistDrawerOpen(true)}
                 onQueueClick={() => setQueueDrawerOpen(true)}
                 onSeek={setUserSeek}
@@ -503,9 +269,9 @@ const Home = () => {
                     onClick={() => selectPlaylist(plays)}
                     className="flex items-center gap-3 p-2 w-full cursor-pointer rounded-lg hover:bg-white/10"
                   >
-                    <img src={plays.cover} alt={plays.name} className="size-10 object-cover rounded-md" loading="lazy" />
+                    <img src={plays.cover_url} alt={plays.nombre} className="size-10 object-cover rounded-md" loading="lazy" />
                     <div className="text-white text-left overflow-hidden">
-                      <p className="font-semibold text-sm truncate">{plays.name}</p>
+                      <p className="font-semibold text-sm truncate">{plays.nombre}</p>
                     </div>
                   </div>
                 ))}
@@ -519,7 +285,7 @@ const Home = () => {
             className="!w-64"
             style={{ backgroundColor: colors.dark }}
           >
-            <QueuePanel songs={queue} currentSong={currentSong} onSelectSong={(song) => handleSelectSong(song, true)} colors={colors} />
+            <QueuePanel songs={queue} currentSong={currentSong} onSelectSong={(song) => handleSelectSong(song, playlistSongs)} colors={colors} />
           </Drawer>
         </>
       )}

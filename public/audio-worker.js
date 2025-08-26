@@ -1,3 +1,5 @@
+// public/audio-worker.js
+
 let fetchControllers = new Map();
 
 self.onmessage = (event) => {
@@ -21,7 +23,8 @@ async function fetchAndPost(url, index) {
   fetchControllers.set(index, controller);
 
   try {
-    const response = await fetchWithRetries(url, 3, controller.signal);
+    // --- LÓGICA DE REINTENTOS AÑADIDA ---
+    const response = await fetchWithRetries(url, 3, controller.signal); // 3 intentos
     const arrayBuffer = await response.arrayBuffer();
     self.postMessage({ status: "success", index, arrayBuffer }, [arrayBuffer]);
   } catch (error) {
@@ -33,16 +36,19 @@ async function fetchAndPost(url, index) {
   }
 }
 
+// --- NUEVA FUNCIÓN CON "EXPONENTIAL BACKOFF" ---
 async function fetchWithRetries(url, retries, signal) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url, { signal, cache: "force-cache" });
+      // Usamos 'no-cache' para asegurar que la URL firmada no de problemas de caché
+      const response = await fetch(url, { signal, cache: "no-cache" });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return response;
     } catch (error) {
-      if (signal.aborted) throw error;
-      if (i === retries - 1) throw error;
-      // Exponential backoff: 1s, 2s, 4s...
+      if (signal.aborted) throw error; // Si se canceló, no reintentar
+      if (i === retries - 1) throw error; // Si es el último intento, lanzar el error
+
+      // Espera exponencial: 1s, 2s, 4s...
       const delay = Math.pow(2, i) * 1000;
       await new Promise((resolve) => setTimeout(resolve, delay));
     }

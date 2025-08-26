@@ -1,8 +1,7 @@
 import PropTypes from "prop-types";
 
-const PlaylistHeader = ({ playlistData, color, colorDark, colorText }) => {
+const PlaylistHeader = ({ playlistData, colorText }) => {
   return (
-    // CORRECCIÓN: El fondo ahora es transparente para dejar ver el gradiente del panel principal.
     <header
       style={{
         color: colorText,

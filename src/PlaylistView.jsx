@@ -15,8 +15,6 @@ const PlaylistView = ({
   currentSong,
   isPlaying,
   colors,
-  imageCache,
-  setImageCache,
   desktopView,
   desktopLyricsProps,
   searchTerm,
@@ -29,12 +27,20 @@ const PlaylistView = ({
     onSearchSubmit(searchTerm);
   };
 
+  const playlistDataForHeader = {
+    name: playlistData.nombre || "Playlist",
+    description: playlistData.descripcion || "",
+    cover: playlistData.cover_url || "https://cdn-icons-png.flaticon.com/512/14793/14793826.png",
+    tracks: songs.length,
+    artist: [...new Set(songs.map((s) => s.artista))].slice(0, 3).join(", "),
+  };
+
   return (
     <div className="h-dvh flex flex-col" style={{ backgroundColor: colors.dark, color: colors.text }}>
       <div className="flex-grow flex overflow-hidden">
         <main className="flex-grow flex flex-col overflow-hidden">
           <div className="flex-shrink-0">
-            <PlaylistHeader playlistData={playlistData} color={colors.hex} colorDark={colors.dark} colorText={colors.text} />
+            <PlaylistHeader playlistData={playlistDataForHeader} color={colors.hex} colorDark={colors.dark} colorText={colors.text} />
             <div className="px-4 pt-4">
               <form onSubmit={handleSearch}>
                 <SearchBar
@@ -61,25 +67,11 @@ const PlaylistView = ({
                   {desktopView === "lyrics" ? (
                     <DesktopLyricsView {...desktopLyricsProps} />
                   ) : (
-                    <SongList
-                      songs={songs}
-                      onSelectSong={(song) => onSelectSong(song, false)}
-                      currentSong={currentSong}
-                      isPlaying={isPlaying}
-                      imageCache={imageCache}
-                      setImageCache={setImageCache}
-                    />
+                    <SongList songs={songs} onSelectSong={(song) => onSelectSong(song, false)} currentSong={currentSong} isPlaying={isPlaying} />
                   )}
                 </div>
                 <div className="sm:hidden h-full">
-                  <SongList
-                    songs={songs}
-                    onSelectSong={(song) => onSelectSong(song, false)}
-                    currentSong={currentSong}
-                    isPlaying={isPlaying}
-                    imageCache={imageCache}
-                    setImageCache={setImageCache}
-                  />
+                  <SongList songs={songs} onSelectSong={(song) => onSelectSong(song, false)} currentSong={currentSong} isPlaying={isPlaying} />
                 </div>
               </>
             )}
@@ -102,8 +94,6 @@ PlaylistView.propTypes = {
   currentSong: PropTypes.object,
   isPlaying: PropTypes.bool.isRequired,
   colors: PropTypes.object.isRequired,
-  imageCache: PropTypes.object.isRequired,
-  setImageCache: PropTypes.func.isRequired,
   desktopView: PropTypes.string,
   desktopLyricsProps: PropTypes.object,
   searchTerm: PropTypes.string.isRequired,

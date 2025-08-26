@@ -12,7 +12,7 @@ const QueuePanel = ({ songs, currentSong, onSelectSong, colors }) => {
       <ul className="flex-grow overflow-y-auto p-2 pb-24">
         {songs.map((song) => (
           <li
-            key={`${song.id}-${song.title}`}
+            key={`${song.id}-${song.titulo}`}
             onClick={() => onSelectSong(song, songs)}
             style={{
               backgroundColor: currentSong && song.id === currentSong.id ? colors.light : "",
@@ -22,8 +22,8 @@ const QueuePanel = ({ songs, currentSong, onSelectSong, colors }) => {
           >
             <img src={song.coverUrl} alt="cover" loading="lazy" className="size-10 object-cover rounded-md flex-shrink-0" />
             <div className="overflow-hidden">
-              <p className={`font-semibold text-sm truncate ${currentSong?.id === song.id ? "text-green-400" : "text-white"}`}>{song.title}</p>
-              <p className="text-xs truncate opacity-70 text-white/80">{song.artist}</p>
+              <p className={`font-semibold text-sm truncate ${currentSong?.id === song.id ? "text-green-400" : "text-white"}`}>{song.titulo}</p>
+              <p className="text-xs truncate opacity-70 text-white/80">{song.artista}</p>
             </div>
           </li>
         ))}
