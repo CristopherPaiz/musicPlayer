@@ -45,20 +45,28 @@ const Home = () => {
   const [isPlaylistDrawerOpen, setPlaylistDrawerOpen] = useState(false);
   const [isQueueDrawerOpen, setQueueDrawerOpen] = useState(false);
   const [isNowPlayingOpenMobile, setNowPlayingOpenMobile] = useState(false);
+  const [showLyricsMobile, setShowLyricsMobile] = useState(false);
   const [mainDesktopView, setMainDesktopView] = useState("list");
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const handlePopState = () => {
-      setSelectedPlaylist(null);
-      setMainDesktopView("list");
+      if (showLyricsMobile) {
+        setShowLyricsMobile(false);
+      } else if (isNowPlayingOpenMobile) {
+        setNowPlayingOpenMobile(false);
+      } else if (mainDesktopView === "lyrics") {
+        setMainDesktopView("list");
+      } else if (selectedPlaylist) {
+        setSelectedPlaylist(null);
+      }
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, []);
+  }, [isNowPlayingOpenMobile, selectedPlaylist, mainDesktopView, showLyricsMobile]);
 
   useEffect(() => {
     const fetchPlaylists = async () => {
@@ -80,15 +88,12 @@ const Home = () => {
   const selectPlaylist = useCallback(
     async (playlist) => {
       if (isPlaylistDrawerOpen) setPlaylistDrawerOpen(false);
-      if (isNowPlayingOpenMobile) setNowPlayingOpenMobile(false);
       if (selectedPlaylist?.id === playlist.id) {
         setMainDesktopView("list");
         return;
       }
 
-      if (window.history.state?.playlistId !== playlist.id) {
-        window.history.pushState({ playlistId: playlist.id }, "", "/");
-      }
+      window.history.pushState({ playlistId: playlist.id }, "", "/");
 
       setMainDesktopView("list");
       setSelectedPlaylist(playlist);
@@ -105,12 +110,25 @@ const Home = () => {
         setIsLoading(false);
       }
     },
-    [selectedPlaylist, isPlaylistDrawerOpen, isNowPlayingOpenMobile]
+    [selectedPlaylist, isPlaylistDrawerOpen]
   );
 
   const onSelectSongFromList = (song) => {
     handleSelectSong(song, playlistSongs);
-    setMainDesktopView("lyrics");
+    if (mainDesktopView !== "lyrics") {
+      window.history.pushState({ view: "lyricsDesktop" }, "", "/");
+      setMainDesktopView("lyrics");
+    }
+  };
+
+  const openNowPlaying = () => {
+    window.history.pushState({ view: "nowPlaying" }, "", "/");
+    setNowPlayingOpenMobile(true);
+  };
+
+  const openMobileLyrics = () => {
+    window.history.pushState({ view: "lyricsMobile" }, "", "/");
+    setShowLyricsMobile(true);
   };
 
   useEffect(() => {
@@ -255,7 +273,7 @@ const Home = () => {
             currentSong={currentSong}
             image={currentImage}
             isPlaying={isPlaying}
-            onExpand={() => setNowPlayingOpenMobile(true)}
+            onExpand={openNowPlaying}
             onTogglePlayPause={handleTogglePlayPause}
           />
           {!isNowPlayingOpenMobile && (
@@ -269,7 +287,7 @@ const Home = () => {
             <div className="sm:hidden">
               <NowPlayingView
                 currentSong={currentSong}
-                onClose={() => setNowPlayingOpenMobile(false)}
+                onClose={() => window.history.back()}
                 image={currentImage}
                 lyrics={lyrics}
                 colors={colors}
@@ -279,6 +297,9 @@ const Home = () => {
                 onPlaylistClick={() => setPlaylistDrawerOpen(true)}
                 onQueueClick={() => setQueueDrawerOpen(true)}
                 onSeek={setUserSeek}
+                showLyricsMobile={showLyricsMobile}
+                onShowLyrics={openMobileLyrics}
+                onHideLyrics={() => window.history.back()}
                 {...commonPlayerProps}
               />
             </div>

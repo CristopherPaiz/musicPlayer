@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Lyrics from "../Lyrics";
 import PlayerControls from "./PlayerControls";
@@ -50,10 +50,12 @@ const NowPlayingView = ({
   onPlaylistClick,
   onQueueClick,
   onSeek,
+  showLyricsMobile,
+  onShowLyrics,
+  onHideLyrics,
   ...controlProps
 }) => {
   const seek = usePlayerSeek();
-  const [showLyricsMobile, setShowLyricsMobile] = useState(false);
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const volumeControlRef = useRef(null);
 
@@ -102,12 +104,7 @@ const NowPlayingView = ({
 
       <main className="flex-grow flex flex-col items-center justify-center gap-4 overflow-hidden text-center -mt-8">
         <div className="flex-shrink-0 mt-2 px-8">
-          <img
-            src={image}
-            alt="cover"
-            onClick={() => setShowLyricsMobile(true)}
-            className="w-full rounded-lg shadow-2xl aspect-square object-cover"
-          />
+          <img src={image} alt="cover" onClick={onShowLyrics} className="w-full rounded-lg shadow-2xl aspect-square object-cover" />
         </div>
         <div className="w-full px-4">
           <div className="px-4">
@@ -116,7 +113,7 @@ const NowPlayingView = ({
           <h3 className="text-lg opacity-80 truncate">{currentSong.artista}</h3>
           {playlistName && <p className="text-xs opacity-60 mt-1 truncate">Playlist: {playlistName}</p>}
         </div>
-        <button onClick={() => setShowLyricsMobile(true)} className="bg-white/10 px-4 py-2 rounded-full text-sm mt-2">
+        <button onClick={onShowLyrics} className="bg-white/10 px-4 py-2 rounded-full text-sm mt-2">
           Mostrar Letra
         </button>
       </main>
@@ -146,7 +143,7 @@ const NowPlayingView = ({
       {showLyricsMobile && (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col z-20 p-4 pb-20">
           <header className="flex-shrink-0 w-full flex justify-end">
-            <button onClick={() => setShowLyricsMobile(false)} className="p-2 bg-black/20 rounded-full z-10">
+            <button onClick={onHideLyrics} className="p-2 bg-black/20 rounded-full z-10">
               <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -183,6 +180,9 @@ NowPlayingView.propTypes = {
   onPlaylistClick: PropTypes.func,
   onQueueClick: PropTypes.func,
   onSeek: PropTypes.func.isRequired,
+  showLyricsMobile: PropTypes.bool.isRequired,
+  onShowLyrics: PropTypes.func.isRequired,
+  onHideLyrics: PropTypes.func.isRequired,
 };
 
 export default NowPlayingView;
