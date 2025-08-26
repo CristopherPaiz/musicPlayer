@@ -3,20 +3,39 @@ import PropTypes from "prop-types";
 import { AudioPlayer } from "../utils/AudioPlayer";
 
 const PlayerContext = createContext(null);
+const PLAYER_STATE_KEY = "musicPlayerState";
 let playerInstance = null;
 
+const getInitialState = () => {
+  try {
+    const savedState = localStorage.getItem(PLAYER_STATE_KEY);
+    if (!savedState) return { volume: 1, random: false, currentSong: null, queue: [], seek: 0 };
+    const parsed = JSON.parse(savedState);
+    return {
+      volume: parsed.volume ?? 1,
+      random: parsed.random ?? false,
+      currentSong: parsed.currentSong ?? null,
+      queue: parsed.queue ?? [],
+      seek: parsed.seek ?? 0,
+    };
+  } catch (error) {
+    return { volume: 1, random: false, currentSong: null, queue: [], seek: 0 };
+  }
+};
+
 export const PlayerProvider = ({ children }) => {
-  const [queue, setQueue] = useState([]);
-  const [currentSong, setCurrentSong] = useState(null);
+  const initialState = useMemo(getInitialState, []);
+  const [queue, setQueue] = useState(initialState.queue);
+  const [currentSong, setCurrentSong] = useState(initialState.currentSong);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
-  const [random, setRandom] = useState(false);
-  const [volume, setVolume] = useState(1);
+  const [random, setRandom] = useState(initialState.random);
+  const [volume, setVolume] = useState(initialState.volume);
   const [lyrics, setLyrics] = useState(null);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
   const [userSeek, setUserSeek] = useState(undefined);
 
-  const seekRef = useRef(0);
+  const seekRef = useRef(initialState.seek);
   const seekSubscribers = useRef(new Set());
 
   const notifySeekSubscribers = useCallback(() => {
@@ -70,13 +89,46 @@ export const PlayerProvider = ({ children }) => {
         onSongEnd: () => skipSong("forward"),
       });
     }
+
+    if (initialState.currentSong && playerInstance) {
+      playerInstance.loadSong(initialState.currentSong, false).then(() => {
+        if (initialState.seek > 0) {
+          playerInstance.seek(initialState.seek);
+          handleSeekUpdate(initialState.seek);
+        }
+      });
+    }
+
     return () => {
       if (playerInstance) {
         playerInstance.destroy();
         playerInstance = null;
       }
     };
-  }, [skipSong, handleSeekUpdate, handleSkipBack]);
+  }, [skipSong, handleSeekUpdate, handleSkipBack, initialState.currentSong, initialState.seek]);
+
+  useEffect(() => {
+    const saveState = () => {
+      if (currentSong) {
+        const stateToSave = {
+          volume,
+          random,
+          currentSong,
+          queue,
+          seek: seekRef.current,
+        };
+        localStorage.setItem(PLAYER_STATE_KEY, JSON.stringify(stateToSave));
+      }
+    };
+
+    const intervalId = setInterval(saveState, 5000);
+    window.addEventListener("beforeunload", saveState);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("beforeunload", saveState);
+    };
+  }, [volume, random, currentSong, queue]);
 
   const handleSelectSong = useCallback(
     (song, sourcePlaylist) => {
@@ -111,16 +163,10 @@ export const PlayerProvider = ({ children }) => {
     if (playerInstance) playerInstance.setVolume(volume);
   }, [volume]);
 
-  // --- LÓGICA DE SEEK OPTIMISTA ---
   useEffect(() => {
     if (userSeek !== undefined && playerInstance) {
-      // 1. Actualiza la UI inmediatamente a la posición deseada
       handleSeekUpdate(userSeek);
-
-      // 2. Pide al reproductor que se ponga al día en segundo plano
       playerInstance.seek(userSeek);
-
-      // 3. Resetea el trigger
       setUserSeek(undefined);
     }
   }, [userSeek, handleSeekUpdate]);

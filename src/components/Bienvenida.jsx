@@ -16,11 +16,11 @@ const Bienvenida = ({ playlists, onPlaylistSelect }) => {
             {playlists.map((playlist) => (
               <div key={playlist.id} onClick={() => onPlaylistSelect(playlist)} className="flex flex-col items-center gap-2 cursor-pointer group">
                 <img
-                  src={playlist.cover}
-                  alt={playlist.name}
+                  src={playlist.cover_url}
+                  alt={playlist.nombre}
                   className="w-32 h-32 object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform"
                 />
-                <p className="font-semibold text-sm text-center">{playlist.name}</p>
+                <p className="font-semibold text-sm text-center">{playlist.nombre}</p>
               </div>
             ))}
           </div>
@@ -28,11 +28,11 @@ const Bienvenida = ({ playlists, onPlaylistSelect }) => {
       </div>
 
       <footer className="p-4 text-center border-t border-white/10">
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <Link to="/login" className="px-4 py-2 text-sm text-white bg-neutral-700 hover:bg-neutral-600 rounded-full transition-colors">
             Admin Login
           </Link>
-        </div>
+        </div> */}
         <h4 className="mb-2 text-white/80 text-sm">
           Hecho por{" "}
           <a href="https://www.github.com/CristopherPaiz" target="_blank" rel="noopener noreferrer" className="mx-1 hover:underline text-blue-400">
